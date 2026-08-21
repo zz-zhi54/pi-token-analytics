@@ -5,6 +5,7 @@
 ## 功能
 
 - 在浏览器本地读取 `~/.pi/agent/sessions` 下的 JSONL 会话文件
+- 支持中文 / English 界面切换，并记住上次选择
 - 按天、按月统计 Input、Output、Cache Read、Cache Write 和总 Token
 - 支持全部、1 天、3 天、7 天、30 天、90 天快速查询
 - 按渠道 / 模型展示四类 Token、调用次数和费用

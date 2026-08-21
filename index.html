@@ -88,15 +88,24 @@
     <header class="mx-auto max-w-[1800px] px-4 pb-8 pt-8 sm:px-6 lg:px-8">
       <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p class="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-info">Local analytics · Pi sessions</p>
+          <p class="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-info" data-i18n="eyebrow">本地分析 · Pi 会话</p>
           <h1 class="text-4xl font-black tracking-tight sm:text-5xl">Pi Token Analytics</h1>
           <p class="mt-3 max-w-2xl text-base-content/65 sm:text-lg">
-            汇总 <code class="rounded bg-base-300 px-1.5 py-0.5 text-sm">~/.pi/agent/sessions</code> 下所有项目的会话消耗，并随时查看原始对话。
+            <span data-i18n="headerSubtitleBefore">汇总</span> <code class="rounded bg-base-300 px-1.5 py-0.5 text-sm">~/.pi/agent/sessions</code> <span data-i18n="headerSubtitleAfter">下所有项目的会话消耗，并随时查看原始对话。</span>
           </p>
         </div>
-        <div class="rounded-box border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
-          <div class="font-semibold">只在浏览器本地处理</div>
-          <div class="mt-1 text-success/70">不会上传会话、命令输出或项目内容</div>
+        <div class="flex flex-wrap items-end justify-end gap-3">
+          <div class="rounded-box border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
+            <div class="font-semibold" data-i18n="localOnly">只在浏览器本地处理</div>
+            <div class="mt-1 text-success/70" data-i18n="noUpload">不会上传会话、命令输出或项目内容</div>
+          </div>
+          <label class="fieldset min-w-24 gap-1 p-0">
+            <span class="label p-0 text-xs text-base-content/60" data-i18n="language">语言</span>
+            <select id="languageSelect" class="select select-sm">
+              <option value="zh">中文</option>
+              <option value="en">English</option>
+            </select>
+          </label>
         </div>
       </div>
     </header>
@@ -105,33 +114,33 @@
       <section class="card border border-base-300 bg-base-100/90 shadow-xl">
         <div class="card-body gap-5">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">How it works</p>
-            <h2 class="card-title mt-1 text-2xl">统计口径</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info" data-i18n="howItWorks">工作方式</p>
+            <h2 class="card-title mt-1 text-2xl" data-i18n="accountingTitle">统计口径</h2>
           </div>
 
           <div class="grid gap-4 md:grid-cols-3">
             <div class="rounded-box bg-base-200 p-4">
-              <div class="text-sm font-semibold">数据来源</div>
-              <p class="mt-2 text-sm leading-6 text-base-content/65">
+              <div class="text-sm font-semibold" data-i18n="dataSource">数据来源</div>
+              <p class="mt-2 text-sm leading-6 text-base-content/65" data-i18n="dataSourceDesc">
                 读取 Pi 持久化的 JSONL 会话文件。每一行都是一个 session entry，页面不根据文字长度估算 Token。
               </p>
             </div>
             <div class="rounded-box bg-base-200 p-4">
-              <div class="text-sm font-semibold">四类 Token</div>
+              <div class="text-sm font-semibold" data-i18n="tokenTypes">四类 Token</div>
               <p class="method-formula mt-2 rounded-field bg-base-300 px-3 py-2 font-mono text-sm leading-6 text-info">
                 total = input + output + cacheRead + cacheWrite
               </p>
-              <p class="mt-2 text-sm leading-6 text-base-content/65">reasoning 已包含在 output 中，不会再次相加。</p>
+              <p class="mt-2 text-sm leading-6 text-base-content/65" data-i18n="reasoningNote">reasoning 已包含在 output 中，不会再次相加。</p>
             </div>
             <div class="rounded-box bg-base-200 p-4">
-              <div class="text-sm font-semibold">费用与时间</div>
+              <div class="text-sm font-semibold" data-i18n="costAndTime">费用与时间</div>
               <p class="mt-2 text-sm leading-6 text-base-content/65">
-                费用直接读取 <code>usage.cost.total</code>；按每次记录的时间归入天和月，默认使用本地时区。
+                <span data-i18n="costAndTimeBefore">费用直接读取</span> <code>usage.cost.total</code><span data-i18n="costAndTimeAfter">；按每次记录的时间归入天和月，默认使用本地时区。</span>
               </p>
             </div>
           </div>
 
-          <div class="rounded-box border border-warning/25 bg-warning/10 p-4 text-sm leading-6 text-warning-content/85">
+          <div class="rounded-box border border-warning/25 bg-warning/10 p-4 text-sm leading-6 text-warning-content/85" data-i18n="accountingNote">
             Pi 的 session 统计会包含已经发生过的历史分支、压缩和摘要消耗。页面会将 assistant、toolResult、compaction、branch_summary 中保存的 usage 一并统计；缺少 usage 的记录不会被猜测，并会在结果中提示。
           </div>
         </div>
@@ -141,27 +150,27 @@
         <div class="card-body gap-5">
           <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">Step 01</p>
-              <h2 class="card-title mt-1 text-2xl">选择 Pi 会话目录</h2>
-              <p class="mt-2 text-sm text-base-content/60">建议选择整个 <code>~/.pi/agent/sessions</code>，这样可以覆盖所有项目。</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info" data-i18n="step01">步骤 01</p>
+              <h2 class="card-title mt-1 text-2xl" data-i18n="chooseSessionDirectory">选择 Pi 会话目录</h2>
+              <p class="mt-2 text-sm text-base-content/60"><span data-i18n="chooseDirectoryDescBefore">建议选择整个</span> <code>~/.pi/agent/sessions</code><span data-i18n="chooseDirectoryDescAfter">，这样可以覆盖所有项目。</span></p>
             </div>
-            <div class="text-sm text-base-content/55">支持多选 JSONL 文件</div>
+            <div class="text-sm text-base-content/55" data-i18n="multipleJsonl">支持多选 JSONL 文件</div>
           </div>
 
           <input id="directoryPicker" type="file" webkitdirectory directory multiple class="hidden" />
           <input id="filePicker" type="file" accept=".jsonl,application/json" multiple class="hidden" />
 
           <div class="flex flex-wrap gap-3">
-            <button id="chooseDirectoryButton" class="btn">选择 sessions 目录</button>
-            <button id="chooseFilesButton" class="btn">添加 JSONL 文件</button>
-            <button id="calculateButton" class="btn btn-primary" disabled>开始计算</button>
+            <button id="chooseDirectoryButton" class="btn" data-i18n="chooseDirectory">选择 sessions 目录</button>
+            <button id="chooseFilesButton" class="btn" data-i18n="addJsonl">添加 JSONL 文件</button>
+            <button id="calculateButton" class="btn btn-primary" disabled data-i18n="calculate">开始计算</button>
           </div>
 
           <div class="rounded-box bg-base-200 px-4 py-3">
-            <div id="selectionSummary" class="text-sm text-base-content/70">尚未选择文件</div>
+            <div id="selectionSummary" class="text-sm text-base-content/70" data-i18n="noFiles">尚未选择文件</div>
             <div id="progressWrap" class="mt-3 hidden">
               <div class="mb-1 flex justify-between text-xs text-base-content/55">
-                <span id="progressLabel">准备读取</span>
+                <span id="progressLabel" data-i18n="readyToRead">准备读取</span>
                 <span id="progressValue">0%</span>
               </div>
               <div class="h-2 overflow-hidden rounded-full bg-base-300">
@@ -176,8 +185,8 @@
       <section id="dashboard" class="hidden space-y-6" aria-live="polite">
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">Step 02</p>
-            <h2 class="mt-1 text-2xl font-bold">整体使用情况</h2>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info" data-i18n="step02">步骤 02</p>
+            <h2 class="mt-1 text-2xl font-bold" data-i18n="overallUsage">整体使用情况</h2>
             <p id="resultSummary" class="mt-2 text-sm text-base-content/60"></p>
           </div>
           <p id="lastUpdated" class="text-sm text-base-content/50"></p>
@@ -189,42 +198,42 @@
           <div class="card-body gap-4">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h3 class="card-title">筛选和显示设置</h3>
-                <p class="mt-1 text-sm text-base-content/55">上面选择时间范围，下面分别按天和按月分组；两者不是重复查询。</p>
+                <h3 class="card-title" data-i18n="filtersTitle">筛选和显示设置</h3>
+                <p class="mt-1 text-sm text-base-content/55" data-i18n="filtersDesc">上面选择时间范围，下面分别按天和按月分组；两者不是重复查询。</p>
               </div>
-              <button id="resetFiltersButton" class="btn btn-sm">重置筛选</button>
+              <button id="resetFiltersButton" class="btn btn-sm" data-i18n="resetFilters">重置筛选</button>
             </div>
             <div class="flex flex-wrap items-center gap-2 rounded-box bg-base-200 p-3">
-              <span class="mr-1 text-sm font-semibold">快速查询</span>
-              <button class="range-button btn btn-sm btn-active" data-range="all">全部</button>
-              <button class="range-button btn btn-sm" data-range="1">1 天</button>
-              <button class="range-button btn btn-sm" data-range="3">3 天</button>
-              <button class="range-button btn btn-sm" data-range="7">7 天</button>
-              <button class="range-button btn btn-sm" data-range="30">30 天</button>
-              <button class="range-button btn btn-sm" data-range="90">90 天</button>
-              <span class="ml-auto text-xs text-base-content/50">按已加载数据的最新日期计算</span>
+              <span class="mr-1 text-sm font-semibold" data-i18n="quickQuery">快速查询</span>
+              <button class="range-button btn btn-sm btn-active" data-range="all" data-i18n="all">全部</button>
+              <button class="range-button btn btn-sm" data-range="1">1 <span data-i18n="day">天</span></button>
+              <button class="range-button btn btn-sm" data-range="3">3 <span data-i18n="days">天</span></button>
+              <button class="range-button btn btn-sm" data-range="7">7 <span data-i18n="days">天</span></button>
+              <button class="range-button btn btn-sm" data-range="30">30 <span data-i18n="days">天</span></button>
+              <button class="range-button btn btn-sm" data-range="90">90 <span data-i18n="days">天</span></button>
+              <span class="ml-auto text-xs text-base-content/50" data-i18n="rangeBasis">按已加载数据的最新日期计算</span>
             </div>
             <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <label class="fieldset gap-1 p-0">
-                <span class="label p-0 text-xs text-base-content/60">时区</span>
+                <span class="label p-0 text-xs text-base-content/60" data-i18n="timezone">时区</span>
                 <select id="timezoneSelect" class="select select-sm w-full">
-                  <option value="local">本地时区</option>
+                  <option value="local" data-i18n="localTimezone">本地时区</option>
                   <option value="utc">UTC</option>
                 </select>
               </label>
               <label class="fieldset gap-1 p-0">
-                <span class="label p-0 text-xs text-base-content/60">开始日期</span>
+                <span class="label p-0 text-xs text-base-content/60" data-i18n="startDate">开始日期</span>
                 <input id="fromDate" type="date" class="input input-sm w-full" />
               </label>
               <label class="fieldset gap-1 p-0">
-                <span class="label p-0 text-xs text-base-content/60">结束日期</span>
+                <span class="label p-0 text-xs text-base-content/60" data-i18n="endDate">结束日期</span>
                 <input id="toDate" type="date" class="input input-sm w-full" />
               </label>
               <div class="flex items-end">
-                <button id="applyFiltersButton" class="btn btn-sm w-full">查询统计</button>
+                <button id="applyFiltersButton" class="btn btn-sm w-full" data-i18n="queryStats">查询统计</button>
               </div>
               <div class="flex items-end">
-                <div id="filterSummary" class="w-full rounded-field bg-base-200 px-3 py-2 text-sm text-base-content/60">当前显示全部记录</div>
+                <div id="filterSummary" class="w-full rounded-field bg-base-200 px-3 py-2 text-sm text-base-content/60" data-i18n="showingAll">当前显示全部记录</div>
               </div>
             </div>
           </div>
@@ -235,10 +244,10 @@
             <div class="card-body">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="card-title">Token 趋势</h3>
-                  <p class="mt-1 text-sm text-base-content/55">最近 30 个有记录日期，总高度按当天总 Token 比例显示。</p>
+                  <h3 class="card-title" data-i18n="tokenTrend">Token 趋势</h3>
+                  <p class="mt-1 text-sm text-base-content/55" data-i18n="tokenTrendDesc">最近 30 个有记录日期，总高度按当天总 Token 比例显示。</p>
                 </div>
-                <span class="text-xs text-base-content/45">按日</span>
+                <span class="text-xs text-base-content/45" data-i18n="daily">按日</span>
               </div>
               <div id="trendChart" class="soft-grid mt-5 flex min-h-52 items-end gap-2 overflow-x-auto rounded-box p-4"></div>
             </div>
@@ -248,23 +257,23 @@
             <div class="card-body">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="card-title">按渠道 / 模型汇总</h3>
-                  <p class="mt-1 text-sm text-base-content/55">分别显示 provider 渠道、模型以及四类 Token；工具和摘要 usage 仍计入总量，但不混入这里。</p>
+                  <h3 class="card-title" data-i18n="channelModelSummary">按渠道 / 模型汇总</h3>
+                  <p class="mt-1 text-sm text-base-content/55" data-i18n="channelModelDesc">分别显示 provider 渠道、模型以及四类 Token；工具和摘要 usage 仍计入总量，但不混入这里。</p>
                 </div>
               </div>
               <div class="mt-4 overflow-hidden">
                 <table class="table table-xs w-full table-fixed table-zebra">
                   <thead>
                     <tr>
-                      <th>渠道</th>
-                      <th>模型</th>
-                      <th>输入</th>
-                      <th>输出</th>
+                      <th data-i18n="channel">渠道</th>
+                      <th data-i18n="model">模型</th>
+                      <th data-i18n="input">输入</th>
+                      <th data-i18n="output">输出</th>
                       <th>Cache Read</th>
                       <th>Cache Write</th>
-                      <th>总量</th>
-                      <th>调用</th>
-                      <th>费用</th>
+                      <th data-i18n="total">总量</th>
+                      <th data-i18n="calls">调用</th>
+                      <th data-i18n="cost">费用</th>
                     </tr>
                   </thead>
                   <tbody id="modelTableBody"></tbody>
@@ -279,22 +288,22 @@
             <div class="card-body">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="card-title">每日明细</h3>
-                  <p class="mt-1 text-sm text-base-content/55">四类 Token、总量、调用次数和费用。</p>
+                  <h3 class="card-title" data-i18n="dailyDetails">每日明细</h3>
+                  <p class="mt-1 text-sm text-base-content/55" data-i18n="dailyDetailsDesc">四类 Token、总量、调用次数和费用。</p>
                 </div>
               </div>
               <div class="mt-4 overflow-hidden">
                 <table class="table table-xs w-full table-fixed table-zebra">
                   <thead>
                     <tr>
-                      <th>日期</th>
-                      <th>输入</th>
-                      <th>输出</th>
+                      <th data-i18n="date">日期</th>
+                      <th data-i18n="input">输入</th>
+                      <th data-i18n="output">输出</th>
                       <th>Cache Read</th>
                       <th>Cache Write</th>
-                      <th>总量</th>
-                      <th>调用</th>
-                      <th>费用</th>
+                      <th data-i18n="total">总量</th>
+                      <th data-i18n="calls">调用</th>
+                      <th data-i18n="cost">费用</th>
                     </tr>
                   </thead>
                   <tbody id="dailyTableBody"></tbody>
@@ -307,22 +316,22 @@
             <div class="card-body">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="card-title">月度汇总</h3>
-                  <p class="mt-1 text-sm text-base-content/55">与上面的时间范围相同，按月份合并显示。</p>
+                  <h3 class="card-title" data-i18n="monthlySummary">月度汇总</h3>
+                  <p class="mt-1 text-sm text-base-content/55" data-i18n="monthlySummaryDesc">与上面的时间范围相同，按月份合并显示。</p>
                 </div>
               </div>
               <div class="mt-4 overflow-hidden">
                 <table class="table table-xs w-full table-fixed table-zebra">
                   <thead>
                     <tr>
-                      <th>月份</th>
-                      <th>输入</th>
-                      <th>输出</th>
+                      <th data-i18n="month">月份</th>
+                      <th data-i18n="input">输入</th>
+                      <th data-i18n="output">输出</th>
                       <th>Cache Read</th>
                       <th>Cache Write</th>
-                      <th>总量</th>
-                      <th>调用</th>
-                      <th>费用</th>
+                      <th data-i18n="total">总量</th>
+                      <th data-i18n="calls">调用</th>
+                      <th data-i18n="cost">费用</th>
                     </tr>
                   </thead>
                   <tbody id="monthlyTableBody"></tbody>
@@ -336,8 +345,8 @@
           <div class="card-body">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h3 class="card-title">按项目</h3>
-                <p class="mt-1 text-sm text-base-content/55">项目名称来自 session header 中保存的 cwd。</p>
+                <h3 class="card-title" data-i18n="byProject">按项目</h3>
+                <p class="mt-1 text-sm text-base-content/55" data-i18n="byProjectDesc">项目名称来自 session header 中保存的 cwd。</p>
               </div>
               <span id="projectCount" class="text-sm text-base-content/50"></span>
             </div>
@@ -345,13 +354,13 @@
               <table class="table table-xs w-full table-fixed table-zebra">
                 <thead>
                   <tr>
-                    <th>项目</th>
-                    <th>调用</th>
-                    <th>输入</th>
-                    <th>输出</th>
-                    <th>缓存</th>
-                    <th>总量</th>
-                    <th>费用</th>
+                    <th data-i18n="project">项目</th>
+                    <th data-i18n="calls">调用</th>
+                    <th data-i18n="input">输入</th>
+                    <th data-i18n="output">输出</th>
+                    <th data-i18n="cache">缓存</th>
+                    <th data-i18n="total">总量</th>
+                    <th data-i18n="cost">费用</th>
                   </tr>
                 </thead>
                 <tbody id="projectTableBody"></tbody>
@@ -364,8 +373,8 @@
           <div class="card-body">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h3 class="card-title">会话与对话</h3>
-                <p class="mt-1 text-sm text-base-content/55">点击“打开对话”可以查看该 session 的聊天内容和工具记录。</p>
+                <h3 class="card-title" data-i18n="sessionsAndChats">会话与对话</h3>
+                <p class="mt-1 text-sm text-base-content/55" data-i18n="sessionsAndChatsDesc">点击“打开对话”可以查看该 session 的聊天内容和工具记录。</p>
               </div>
               <span id="sessionCount" class="text-sm text-base-content/50"></span>
             </div>
@@ -373,13 +382,13 @@
               <table class="table table-xs w-full table-fixed table-zebra">
                 <thead>
                   <tr>
-                    <th>项目 / 会话</th>
-                    <th>时间</th>
-                    <th>输入</th>
-                    <th>输出</th>
-                    <th>缓存</th>
-                    <th>总量</th>
-                    <th>费用</th>
+                    <th data-i18n="projectSession">项目 / 会话</th>
+                    <th data-i18n="time">时间</th>
+                    <th data-i18n="input">输入</th>
+                    <th data-i18n="output">输出</th>
+                    <th data-i18n="cache">缓存</th>
+                    <th data-i18n="total">总量</th>
+                    <th data-i18n="cost">费用</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -390,7 +399,7 @@
         </section>
 
         <section id="issuesPanel" class="hidden rounded-box border border-warning/25 bg-warning/10 p-4 text-sm text-warning-content/85">
-          <div class="font-semibold">解析提示</div>
+          <div class="font-semibold" data-i18n="parseIssues">解析提示</div>
           <ul id="issuesList" class="mt-2 list-disc space-y-1 pl-5"></ul>
         </section>
       </section>
@@ -400,22 +409,22 @@
       <div class="modal-box flex h-[90vh] w-11/12 max-w-6xl flex-col gap-4 p-4 sm:p-6">
         <div class="flex flex-col gap-3 border-b border-base-300 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-info">Session detail</p>
-            <h3 id="detailTitle" class="mt-1 truncate text-xl font-bold">对话详情</h3>
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-info" data-i18n="sessionDetail">会话详情</p>
+            <h3 id="detailTitle" class="mt-1 truncate text-xl font-bold" data-i18n="chatDetails">对话详情</h3>
             <p id="detailMeta" class="mt-1 break-all text-sm text-base-content/55"></p>
           </div>
           <div class="flex items-center gap-2">
             <select id="detailMode" class="select select-sm" aria-label="对话分支显示模式">
-              <option value="active">当前分支</option>
-              <option value="all">全部记录</option>
+              <option value="active" data-i18n="activeBranch">当前分支</option>
+              <option value="all" data-i18n="allRecords">全部记录</option>
             </select>
-            <form method="dialog"><button class="btn btn-sm">关闭</button></form>
+            <form method="dialog"><button class="btn btn-sm" data-i18n="close">关闭</button></form>
           </div>
         </div>
         <div id="detailSummary" class="rounded-box bg-base-200 px-4 py-3 text-sm text-base-content/70"></div>
         <div id="conversationBody" class="conversation-scroll space-y-4"></div>
       </div>
-      <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+      <form method="dialog" class="modal-backdrop"><button data-i18n="close">关闭</button></form>
     </dialog>
 
     <script>
@@ -426,15 +435,17 @@
         detailSession: null,
         detailData: null,
         detailRequestId: 0,
+        language: localStorage.getItem("pi-token-language") || "zh",
+        status: null,
       };
 
-      const numberFormatter = new Intl.NumberFormat("zh-CN");
       const elements = {
         directoryPicker: document.querySelector("#directoryPicker"),
         filePicker: document.querySelector("#filePicker"),
         chooseDirectoryButton: document.querySelector("#chooseDirectoryButton"),
         chooseFilesButton: document.querySelector("#chooseFilesButton"),
         calculateButton: document.querySelector("#calculateButton"),
+        languageSelect: document.querySelector("#languageSelect"),
         selectionSummary: document.querySelector("#selectionSummary"),
         progressWrap: document.querySelector("#progressWrap"),
         progressLabel: document.querySelector("#progressLabel"),
@@ -469,6 +480,341 @@
         detailSummary: document.querySelector("#detailSummary"),
         conversationBody: document.querySelector("#conversationBody"),
       };
+
+      const translations = {
+        zh: {
+          pageDescription: "在本地分析 Pi JSONL 会话中的 Token 使用量与费用",
+          eyebrow: "本地分析 · Pi 会话",
+          headerSubtitleBefore: "汇总",
+          headerSubtitleAfter: "下所有项目的会话消耗，并随时查看原始对话。",
+          localOnly: "只在浏览器本地处理",
+          noUpload: "不会上传会话、命令输出或项目内容",
+          language: "语言",
+          howItWorks: "工作方式",
+          accountingTitle: "统计口径",
+          dataSource: "数据来源",
+          dataSourceDesc: "读取 Pi 持久化的 JSONL 会话文件。每一行都是一个 session entry，页面不根据文字长度估算 Token。",
+          tokenTypes: "四类 Token",
+          reasoningNote: "reasoning 已包含在 output 中，不会再次相加。",
+          costAndTime: "费用与时间",
+          costAndTimeBefore: "费用直接读取",
+          costAndTimeAfter: "；按每次记录的时间归入天和月，默认使用本地时区。",
+          accountingNote: "Pi 的 session 统计会包含已经发生过的历史分支、压缩和摘要消耗。页面会将 assistant、toolResult、compaction、branch_summary 中保存的 usage 一并统计；缺少 usage 的记录不会被猜测，并会在结果中提示。",
+          step01: "步骤 01",
+          chooseSessionDirectory: "选择 Pi 会话目录",
+          chooseDirectoryDescBefore: "建议选择整个",
+          chooseDirectoryDescAfter: "，这样可以覆盖所有项目。",
+          multipleJsonl: "支持多选 JSONL 文件",
+          chooseDirectory: "选择 sessions 目录",
+          addJsonl: "添加 JSONL 文件",
+          calculate: "开始计算",
+          noFiles: "尚未选择文件",
+          readyToRead: "准备读取",
+          step02: "步骤 02",
+          overallUsage: "整体使用情况",
+          filtersTitle: "筛选和显示设置",
+          filtersDesc: "上面选择时间范围，下面分别按天和按月分组；两者不是重复查询。",
+          resetFilters: "重置筛选",
+          quickQuery: "快速查询",
+          all: "全部",
+          day: "天",
+          days: "天",
+          rangeBasis: "按已加载数据的最新日期计算",
+          timezone: "时区",
+          localTimezone: "本地时区",
+          startDate: "开始日期",
+          endDate: "结束日期",
+          queryStats: "查询统计",
+          showingAll: "当前显示全部记录",
+          tokenTrend: "Token 趋势",
+          tokenTrendDesc: "最近 30 个有记录日期，总高度按当天总 Token 比例显示。",
+          daily: "按日",
+          channelModelSummary: "按渠道 / 模型汇总",
+          channelModelDesc: "分别显示 provider 渠道、模型以及四类 Token；工具和摘要 usage 仍计入总量，但不混入这里。",
+          channel: "渠道",
+          model: "模型",
+          input: "输入",
+          output: "输出",
+          total: "总量",
+          calls: "调用",
+          cost: "费用",
+          dailyDetails: "每日明细",
+          dailyDetailsDesc: "四类 Token、总量、调用次数和费用。",
+          date: "日期",
+          monthlySummary: "月度汇总",
+          monthlySummaryDesc: "与上面的时间范围相同，按月份合并显示。",
+          month: "月份",
+          byProject: "按项目",
+          byProjectDesc: "项目名称来自 session header 中保存的 cwd。",
+          project: "项目",
+          cache: "缓存",
+          sessionsAndChats: "会话与对话",
+          sessionsAndChatsDesc: "点击“打开对话”可以查看该 session 的聊天内容和工具记录。",
+          projectSession: "项目 / 会话",
+          time: "时间",
+          parseIssues: "解析提示",
+          sessionDetail: "会话详情",
+          chatDetails: "对话详情",
+          activeBranch: "当前分支",
+          allRecords: "全部记录",
+          branchMode: "对话分支显示模式",
+          close: "关闭",
+          kpiTotal: "总 Token",
+          kpiTotalDesc: "四类 Token 相加",
+          kpiInput: "输入 Token",
+          kpiInputDesc: "usage.input",
+          kpiOutput: "输出 Token",
+          kpiOutputDesc: "usage.output（含 reasoning）",
+          kpiCacheRead: "Cache Read",
+          kpiCacheReadDesc: "usage.cacheRead",
+          kpiCacheWrite: "Cache Write",
+          kpiCacheWriteDesc: "usage.cacheWrite",
+          kpiCalls: "LLM 调用",
+          kpiCallsDesc: "assistant 消息数量",
+          kpiToolCalls: "Tool Calls",
+          kpiToolCallsDesc: "assistant 中的工具调用",
+          kpiCost: "费用（USD）",
+          kpiCostDesc: "usage.cost.total",
+          noRecords: "暂无记录",
+          noDailyRecords: "暂无每日记录",
+          noMonthlyRecords: "暂无月度记录",
+          noTrendData: "暂无趋势数据",
+          noFilteredSessions: "当前筛选条件下没有会话",
+          sessionCount: "{count} 个会话",
+          projectCount: "{count} 个项目",
+          resultSummary: "{sessions} 个会话 · {projects} 个项目 · {records} 条用量记录",
+          calculatedAt: "计算完成于 {time}",
+          filterRange: "{from} 至 {to}",
+          earliest: "最早",
+          latest: "最新",
+          openConversation: "打开对话",
+          inputLabel: "输入",
+          outputLabel: "输出",
+          cacheReadLabel: "Cache Read",
+          cacheWriteLabel: "Cache Write",
+          totalLabel: "总量",
+          assistant: "Assistant",
+          you: "你",
+          thinking: "思考过程",
+          toolCall: "工具调用：{name}",
+          unknownTool: "未知工具",
+          imageAttachment: "图片附件（{type}）",
+          unknownType: "未知类型",
+          emptyMessage: "空消息",
+          emptyReply: "空回复",
+          toolResult: "工具结果",
+          unnamedTool: "未命名工具",
+          unknownMessage: "未知消息",
+          contextCompaction: "上下文压缩",
+          noSummary: "无摘要",
+          branchSummary: "分支摘要",
+          modelChanged: "切换模型：{provider}/{model}",
+          thinkingLevelChanged: "切换思考级别：{level}",
+          extensionMessage: "扩展消息",
+          noTextContent: "[无文本内容]",
+          noDisplayableMessages: "这个 session 没有可显示的消息。",
+          readingSession: "正在读取会话内容…",
+          readingJsonl: "正在读取 JSONL…",
+          detailSummary: "{from} → {to} · {total} Token · {cost} · {assistant} 条 Assistant · {user} 条用户消息",
+          readFailed: "读取失败：{error}",
+          cannotReadSession: "无法读取这个会话文件。",
+          filesSelected: "已选择 {count} 个候选文件。点击“开始计算”后才会读取内容。",
+          filesAdded: "已添加 {count} 个文件。",
+          noJsonl: "没有发现 JSONL 文件。",
+          readingFile: "正在读取 {current}/{total}：{file}",
+          complete: "完成：读取 {count} 个有效 session。",
+          duplicateSession: "跳过重复 session：{id}（{file}）",
+          malformedLines: "{file} 有 {count} 行 JSON 无法解析。",
+          missingUsage: "{file} 有 {count} 条 Assistant 记录缺少 usage，相关调用会计入次数但不会产生 Token。",
+          invalidSessionFile: "{file}：{error}",
+          unknownProject: "未知项目",
+          unknownTime: "未知时间",
+          invalidSessionHeader: "找不到有效的 session header",
+          emptyResult: "空结果",
+          usageLine: "输入 {input} · 输出 {output} · Cache Read {cacheRead} · Cache Write {cacheWrite} · 总量 {total} · {cost}",
+        },
+        en: {
+          pageDescription: "Analyze Pi JSONL session token usage and cost locally",
+          eyebrow: "Local analytics · Pi sessions",
+          headerSubtitleBefore: "Aggregate usage across all projects under",
+          headerSubtitleAfter: "and inspect the original conversations.",
+          localOnly: "Processed locally in your browser",
+          noUpload: "Sessions, command output, and project content never leave this page",
+          language: "Language",
+          howItWorks: "How it works",
+          accountingTitle: "Accounting rules",
+          dataSource: "Data source",
+          dataSourceDesc: "Reads Pi's persisted JSONL session files. Each line is a session entry; tokens are never estimated from text length.",
+          tokenTypes: "Four token types",
+          reasoningNote: "Reasoning is already included in output and is not added again.",
+          costAndTime: "Cost and time",
+          costAndTimeBefore: "Cost is read directly from",
+          costAndTimeAfter: "; records are grouped by day and month using the local timezone by default.",
+          accountingNote: "Pi session statistics include usage from completed branches, compaction, and summaries. Usage saved in assistant, toolResult, compaction, and branch_summary entries is aggregated; missing usage is never guessed and is reported in the results.",
+          step01: "STEP 01",
+          chooseSessionDirectory: "Choose the Pi session directory",
+          chooseDirectoryDescBefore: "Select the entire",
+          chooseDirectoryDescAfter: "directory to cover all projects.",
+          multipleJsonl: "Multiple JSONL files supported",
+          chooseDirectory: "Choose sessions directory",
+          addJsonl: "Add JSONL files",
+          calculate: "Calculate",
+          noFiles: "No files selected",
+          readyToRead: "Ready to read",
+          step02: "STEP 02",
+          overallUsage: "Overall usage",
+          filtersTitle: "Filters and display settings",
+          filtersDesc: "Choose a time range above; the results below are grouped by day and month. These are not duplicate queries.",
+          resetFilters: "Reset filters",
+          quickQuery: "Quick query",
+          all: "All",
+          day: "day",
+          days: "days",
+          rangeBasis: "Based on the latest date in the loaded data",
+          timezone: "Timezone",
+          localTimezone: "Local timezone",
+          startDate: "Start date",
+          endDate: "End date",
+          queryStats: "Query statistics",
+          showingAll: "Showing all records",
+          tokenTrend: "Token trend",
+          tokenTrendDesc: "The latest 30 days with records; bar height is proportional to daily total tokens.",
+          daily: "Daily",
+          channelModelSummary: "By channel / model",
+          channelModelDesc: "Shows each provider, model, and the four token types; tool and summary usage remains in totals but is not mixed here.",
+          channel: "Channel",
+          model: "Model",
+          input: "Input",
+          output: "Output",
+          total: "Total",
+          calls: "Calls",
+          cost: "Cost",
+          dailyDetails: "Daily details",
+          dailyDetailsDesc: "Four token types, total, calls, and cost.",
+          date: "Date",
+          monthlySummary: "Monthly summary",
+          monthlySummaryDesc: "The same time range grouped by month.",
+          month: "Month",
+          byProject: "By project",
+          byProjectDesc: "Project names come from cwd saved in the session header.",
+          project: "Project",
+          cache: "Cache",
+          sessionsAndChats: "Sessions and conversations",
+          sessionsAndChatsDesc: "Open a session to inspect its chat content and tool records.",
+          projectSession: "Project / session",
+          time: "Time",
+          parseIssues: "Parsing notes",
+          sessionDetail: "Session detail",
+          chatDetails: "Conversation detail",
+          activeBranch: "Current branch",
+          allRecords: "All records",
+          branchMode: "Conversation branch display mode",
+          close: "Close",
+          kpiTotal: "Total tokens",
+          kpiTotalDesc: "Sum of four token types",
+          kpiInput: "Input tokens",
+          kpiInputDesc: "usage.input",
+          kpiOutput: "Output tokens",
+          kpiOutputDesc: "usage.output (includes reasoning)",
+          kpiCacheRead: "Cache Read",
+          kpiCacheReadDesc: "usage.cacheRead",
+          kpiCacheWrite: "Cache Write",
+          kpiCacheWriteDesc: "usage.cacheWrite",
+          kpiCalls: "LLM calls",
+          kpiCallsDesc: "Assistant message count",
+          kpiToolCalls: "Tool calls",
+          kpiToolCallsDesc: "Tool calls inside assistant messages",
+          kpiCost: "Cost (USD)",
+          kpiCostDesc: "usage.cost.total",
+          noRecords: "No records",
+          noDailyRecords: "No daily records",
+          noMonthlyRecords: "No monthly records",
+          noTrendData: "No trend data",
+          noFilteredSessions: "No sessions match the current filters",
+          sessionCount: "{count} sessions",
+          projectCount: "{count} projects",
+          resultSummary: "{sessions} sessions · {projects} projects · {records} usage records",
+          calculatedAt: "Calculated at {time}",
+          filterRange: "{from} to {to}",
+          earliest: "earliest",
+          latest: "latest",
+          openConversation: "Open conversation",
+          inputLabel: "Input",
+          outputLabel: "Output",
+          cacheReadLabel: "Cache Read",
+          cacheWriteLabel: "Cache Write",
+          totalLabel: "Total",
+          assistant: "Assistant",
+          you: "You",
+          thinking: "Thinking",
+          toolCall: "Tool call: {name}",
+          unknownTool: "Unknown tool",
+          imageAttachment: "Image attachment ({type})",
+          unknownType: "unknown type",
+          emptyMessage: "Empty message",
+          emptyReply: "Empty reply",
+          toolResult: "Tool result",
+          unnamedTool: "Unnamed tool",
+          unknownMessage: "Unknown message",
+          contextCompaction: "Context compaction",
+          noSummary: "No summary",
+          branchSummary: "Branch summary",
+          modelChanged: "Model changed: {provider}/{model}",
+          thinkingLevelChanged: "Thinking level changed: {level}",
+          extensionMessage: "Extension message",
+          noTextContent: "[No text content]",
+          noDisplayableMessages: "This session has no displayable messages.",
+          readingSession: "Reading session…",
+          readingJsonl: "Reading JSONL…",
+          detailSummary: "{from} → {to} · {total} tokens · {cost} · {assistant} assistant · {user} user messages",
+          readFailed: "Read failed: {error}",
+          cannotReadSession: "Unable to read this session file.",
+          filesSelected: "{count} candidate files selected. Click “Calculate” to read them.",
+          filesAdded: "{count} file(s) added.",
+          noJsonl: "No JSONL files found.",
+          readingFile: "Reading {current}/{total}: {file}",
+          complete: "Done: read {count} valid session(s).",
+          duplicateSession: "Skipped duplicate session: {id} ({file})",
+          malformedLines: "{file} contains {count} invalid JSON line(s).",
+          missingUsage: "{file} has {count} assistant record(s) without usage. Calls are counted, but no tokens are added.",
+          invalidSessionFile: "{file}: {error}",
+          unknownProject: "Unknown project",
+          unknownTime: "Unknown time",
+          invalidSessionHeader: "No valid session header found",
+          emptyResult: "Empty result",
+          usageLine: "Input {input} · Output {output} · Cache Read {cacheRead} · Cache Write {cacheWrite} · Total {total} · {cost}",
+        },
+      };
+
+      function getLocale() {
+        return state.language === "en" ? "en-US" : "zh-CN";
+      }
+
+      function t(key, values = {}) {
+        const template = translations[state.language]?.[key] ?? translations.zh[key] ?? key;
+        return Object.entries(values).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, String(value)), template);
+      }
+
+      function applyLanguage(language) {
+        state.language = language === "en" ? "en" : "zh";
+        localStorage.setItem("pi-token-language", state.language);
+        document.documentElement.lang = state.language === "en" ? "en" : "zh-CN";
+        document.title = "Pi Token Analytics";
+        document.querySelector('meta[name="description"]').content = t("pageDescription");
+        elements.languageSelect.value = state.language;
+        elements.detailMode.setAttribute("aria-label", t("branchMode"));
+        document.querySelectorAll("[data-i18n]").forEach((element) => {
+          element.textContent = t(element.dataset.i18n);
+        });
+        if (state.status) renderStatus();
+        updateSelectionSummary();
+        renderIssues();
+        if (state.sessions.length) refreshDashboard();
+        if (state.detailData) {
+          elements.detailSummary.textContent = detailSummaryText(state.detailSession);
+          renderDetailConversation();
+        }
+      }
 
       function createTotals() {
         return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
@@ -545,8 +891,8 @@
             if (typeof part === "string") return part;
             if (!part || typeof part !== "object") return "";
             if (part.type === "text" || part.type === "thinking") return part.text || "";
-            if (part.type === "toolCall") return `[工具调用：${part.name || "未知工具"}]`;
-            if (part.type === "image") return "[图片]";
+            if (part.type === "toolCall") return `[${t("toolCall", { name: part.name || t("unknownTool") })}]`;
+            if (part.type === "image") return "[Image]";
             return "";
           })
           .filter(Boolean)
@@ -621,7 +967,7 @@
       }
 
       function formatTokens(value) {
-        return numberFormatter.format(Math.round(numeric(value)));
+        return new Intl.NumberFormat(getLocale()).format(Math.round(numeric(value)));
       }
 
       function formatCost(value) {
@@ -629,27 +975,32 @@
       }
 
       function formatDateTime(timestamp) {
-        if (!timestamp) return "未知时间";
+        if (!timestamp) return t("unknownTime");
         const options = { dateStyle: "medium", timeStyle: "short" };
         if (elements.timezoneSelect.value === "utc") options.timeZone = "UTC";
-        return new Intl.DateTimeFormat("zh-CN", options).format(new Date(timestamp));
+        return new Intl.DateTimeFormat(getLocale(), options).format(new Date(timestamp));
       }
 
       function projectName(cwd) {
-        const parts = String(cwd || "未知项目").split(/[\\/]/).filter(Boolean);
-        return parts.at(-1) || cwd || "未知项目";
+        const fallback = t("unknownProject");
+        const parts = String(cwd || fallback).split(/[\\/]/).filter(Boolean);
+        return parts.at(-1) || cwd || fallback;
       }
 
-      function setStatus(message, tone = "text-base-content/65") {
-        elements.loadStatus.className = `mt-2 text-sm ${tone}`;
-        elements.loadStatus.textContent = message;
+      function renderStatus() {
+        if (!state.status) return;
+        elements.loadStatus.className = `mt-2 text-sm ${state.status.tone}`;
+        elements.loadStatus.textContent = t(state.status.key, state.status.values);
+      }
+
+      function setStatus(key, values = {}, tone = "text-base-content/65") {
+        state.status = { key, values, tone };
+        renderStatus();
       }
 
       function updateSelectionSummary() {
         const count = state.files.length;
-        elements.selectionSummary.textContent = count
-          ? `已选择 ${numberFormatter.format(count)} 个候选文件。点击“开始计算”后才会读取内容。`
-          : "尚未选择文件";
+        elements.selectionSummary.textContent = count ? t("filesSelected", { count: formatTokens(count) }) : t("noFiles");
         elements.calculateButton.disabled = count === 0;
       }
 
@@ -659,7 +1010,7 @@
         for (const file of incoming) filesByKey.set(fileKey(file), file);
         state.files = Array.from(filesByKey.values());
         updateSelectionSummary();
-        setStatus(incoming.length ? `已添加 ${incoming.length} 个文件。` : "没有发现 JSONL 文件。", incoming.length ? "text-success" : "text-warning");
+        setStatus(incoming.length ? "filesAdded" : "noJsonl", { count: formatTokens(incoming.length) }, incoming.length ? "text-success" : "text-warning");
       }
 
       async function parseSessionFile(file, includeEntries = false) {
@@ -685,7 +1036,7 @@
         }
 
         if (!header || typeof header.id !== "string") {
-          throw new Error("找不到有效的 session header");
+          throw new Error(t("invalidSessionHeader"));
         }
 
         const headerTimestamp = toTimestamp(header.timestamp);
@@ -883,20 +1234,20 @@
         return `<td class="whitespace-normal break-words ${className}">${value}</td>`;
       }
 
-      function emptyRow(colspan, message = "暂无记录") {
+      function emptyRow(colspan, message = t("noRecords")) {
         return `<tr><td colspan="${colspan}" class="py-10 text-center text-base-content/45">${message}</td></tr>`;
       }
 
       function renderKpis(summary) {
         const cards = [
-          ["总 Token", summary.totals.total, "四类 Token 相加", "text-info"],
-          ["输入 Token", summary.totals.input, "usage.input", ""],
-          ["输出 Token", summary.totals.output, "usage.output（含 reasoning）", ""],
-          ["Cache Read", summary.totals.cacheRead, "usage.cacheRead", ""],
-          ["Cache Write", summary.totals.cacheWrite, "usage.cacheWrite", ""],
-          ["LLM 调用", summary.calls, "assistant 消息数量", ""],
-          ["Tool Calls", summary.toolCalls, "assistant 中的工具调用", ""],
-          ["费用（USD）", formatCost(summary.totals.cost), "usage.cost.total", "text-success"],
+          [t("kpiTotal"), summary.totals.total, t("kpiTotalDesc"), "text-info"],
+          [t("kpiInput"), summary.totals.input, t("kpiInputDesc"), ""],
+          [t("kpiOutput"), summary.totals.output, t("kpiOutputDesc"), ""],
+          [t("kpiCacheRead"), summary.totals.cacheRead, t("kpiCacheReadDesc"), ""],
+          [t("kpiCacheWrite"), summary.totals.cacheWrite, t("kpiCacheWriteDesc"), ""],
+          [t("kpiCalls"), summary.calls, t("kpiCallsDesc"), ""],
+          [t("kpiToolCalls"), summary.toolCalls, t("kpiToolCallsDesc"), ""],
+          [t("kpiCost"), formatCost(summary.totals.cost), t("kpiCostDesc"), "text-success"],
         ];
         elements.kpiGrid.innerHTML = cards
           .map(
@@ -913,9 +1264,9 @@
       }
 
       function renderBucketTables(dailyRows, monthlyRows) {
-        const render = (rows, target, label) => {
+        const render = (rows, target, emptyMessageKey) => {
           if (!rows.length) {
-            target.innerHTML = emptyRow(8, `暂无${label}记录`);
+            target.innerHTML = emptyRow(8, t(emptyMessageKey));
             return;
           }
           target.innerHTML = rows
@@ -933,13 +1284,13 @@
             )
             .join("");
         };
-        render(dailyRows, elements.dailyTableBody, "按天");
-        render(monthlyRows, elements.monthlyTableBody, "按月");
+        render(dailyRows, elements.dailyTableBody, "noDailyRecords");
+        render(monthlyRows, elements.monthlyTableBody, "noMonthlyRecords");
       }
 
       function renderTrend(rows) {
         if (!rows.length) {
-          elements.trendChart.innerHTML = '<div class="m-auto text-sm text-base-content/45">暂无趋势数据</div>';
+          elements.trendChart.innerHTML = `<div class="m-auto text-sm text-base-content/45">${t("noTrendData")}</div>`;
           return;
         }
         const chartRows = rows.slice(0, 30).reverse();
@@ -954,9 +1305,9 @@
                 <div class="chart-bar w-full rounded-selector bg-info transition-all" tabindex="0" aria-label="${escapeHtml(label)}" style="height: ${height}%">
                   <div class="chart-tooltip">
                     <div class="font-semibold text-info">${escapeHtml(row.key)}</div>
-                    <div>总量：${formatTokens(row.totals.total)} Token</div>
-                    <div class="text-base-content/65">输入：${formatTokens(row.totals.input)} · 输出：${formatTokens(row.totals.output)}</div>
-                    <div class="text-base-content/65">Cache Read：${formatTokens(row.totals.cacheRead)} · Cache Write：${formatTokens(row.totals.cacheWrite)}</div>
+                    <div>${t("totalLabel")}: ${formatTokens(row.totals.total)} Token</div>
+                    <div class="text-base-content/65">${t("inputLabel")}: ${formatTokens(row.totals.input)} · ${t("outputLabel")}: ${formatTokens(row.totals.output)}</div>
+                    <div class="text-base-content/65">${t("cacheReadLabel")}: ${formatTokens(row.totals.cacheRead)} · ${t("cacheWriteLabel")}: ${formatTokens(row.totals.cacheWrite)}</div>
                   </div>
                 </div>
               </div>
@@ -968,7 +1319,7 @@
 
       function renderModelTable(rows) {
         if (!rows.length) {
-          elements.modelTableBody.innerHTML = emptyRow(9);
+          elements.modelTableBody.innerHTML = emptyRow(9, t("noRecords"));
           return;
         }
         elements.modelTableBody.innerHTML = rows
@@ -990,7 +1341,7 @@
 
       function renderProjectTable(rows) {
         if (!rows.length) {
-          elements.projectTableBody.innerHTML = emptyRow(7);
+          elements.projectTableBody.innerHTML = emptyRow(7, t("noRecords"));
           return;
         }
         elements.projectTableBody.innerHTML = rows
@@ -1017,9 +1368,9 @@
             return !hasDateFilter || summary.records > 0;
           });
 
-        elements.sessionCount.textContent = `${numberFormatter.format(rows.length)} 个会话`;
+        elements.sessionCount.textContent = t("sessionCount", { count: formatTokens(rows.length) });
         if (!rows.length) {
-          elements.sessionTableBody.innerHTML = emptyRow(8, "当前筛选条件下没有会话");
+          elements.sessionTableBody.innerHTML = emptyRow(8, t("noFilteredSessions"));
           return;
         }
 
@@ -1039,7 +1390,7 @@
               ${cell(formatTokens(cache))}
               ${cell(`<strong>${formatTokens(summary.totals.total)}</strong>`)}
               ${cell(formatCost(summary.totals.cost))}
-              <td><button class="open-session btn btn-ghost btn-sm whitespace-nowrap" data-session-index="${index}">打开对话</button></td>
+              <td><button class="open-session btn btn-ghost btn-sm whitespace-nowrap" data-session-index="${index}">${t("openConversation")}</button></td>
             </tr>`;
           })
           .join("");
@@ -1051,7 +1402,7 @@
           return;
         }
         elements.issuesPanel.classList.remove("hidden");
-        elements.issuesList.innerHTML = state.issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("");
+        elements.issuesList.innerHTML = state.issues.map((issue) => `<li>${escapeHtml(t(issue.key, issue.values))}</li>`).join("");
       }
 
       function refreshDashboard() {
@@ -1060,7 +1411,7 @@
         const dailyRows = bucketRows(allEvents, "day");
         const monthlyRows = bucketRows(allEvents, "month");
         const modelRows = groupModelRows(allEvents.filter((event) => event.kind === "assistant"));
-        const projectRows = groupRows(allEvents, (event) => event.project || "未知项目");
+        const projectRows = groupRows(allEvents, (event) => event.project || t("unknownProject"));
 
         renderKpis(summary);
         renderTrend(dailyRows);
@@ -1071,14 +1422,25 @@
 
         const dateFilter = elements.fromDate.value || elements.toDate.value;
         elements.filterSummary.textContent = dateFilter
-          ? `${elements.fromDate.value || "最早"} 至 ${elements.toDate.value || "最新"}`
-          : "当前显示全部记录";
-        elements.resultSummary.textContent = `${numberFormatter.format(state.sessions.length)} 个会话 · ${numberFormatter.format(new Set(state.sessions.map((session) => session.cwd)).size)} 个项目 · ${numberFormatter.format(allEvents.length)} 条用量记录`;
-        elements.lastUpdated.textContent = `计算完成于 ${formatDateTime(Date.now())}`;
+          ? t("filterRange", { from: elements.fromDate.value || t("earliest"), to: elements.toDate.value || t("latest") })
+          : t("showingAll");
+        elements.resultSummary.textContent = t("resultSummary", {
+          sessions: formatTokens(state.sessions.length),
+          projects: formatTokens(new Set(state.sessions.map((session) => session.cwd)).size),
+          records: formatTokens(allEvents.length),
+        });
+        elements.lastUpdated.textContent = t("calculatedAt", { time: formatDateTime(Date.now()) });
       }
 
       function renderDetailUsage(usage) {
-        return `输入 ${formatTokens(usage.input)} · 输出 ${formatTokens(usage.output)} · Cache Read ${formatTokens(usage.cacheRead)} · Cache Write ${formatTokens(usage.cacheWrite)} · 总量 ${formatTokens(usage.total)} · ${formatCost(usage.cost)}`;
+        return t("usageLine", {
+          input: formatTokens(usage.input),
+          output: formatTokens(usage.output),
+          cacheRead: formatTokens(usage.cacheRead),
+          cacheWrite: formatTokens(usage.cacheWrite),
+          total: formatTokens(usage.total),
+          cost: formatCost(usage.cost),
+        });
       }
 
       function renderTextBlock(text, className = "") {
@@ -1095,19 +1457,19 @@
             if (part.type === "text") return renderTextBlock(part.text || "");
             if (part.type === "thinking") {
               return `<details class="rounded-box border border-secondary/25 bg-secondary/10 p-3 text-sm">
-                <summary class="cursor-pointer font-semibold text-secondary-content/75">思考过程</summary>
+                <summary class="cursor-pointer font-semibold text-secondary-content/75">${t("thinking")}</summary>
                 <div class="conversation-content mt-3 text-base-content/70">${escapeHtml(part.thinking || part.text || "")}</div>
               </details>`;
             }
             if (part.type === "toolCall") {
               const args = JSON.stringify(part.arguments ?? {}, null, 2);
               return `<details class="rounded-box border border-base-300 bg-base-200 p-3 text-sm">
-                <summary class="cursor-pointer font-semibold">工具调用：${escapeHtml(part.name || "未知工具")}</summary>
+                <summary class="cursor-pointer font-semibold">${escapeHtml(t("toolCall", { name: part.name || t("unknownTool") }))}</summary>
                 <pre class="conversation-content mt-3 overflow-x-auto text-xs text-base-content/65">${escapeHtml(args)}</pre>
               </details>`;
             }
             if (part.type === "image") {
-              return `<div class="rounded-field border border-base-300 bg-base-200 px-3 py-2 text-sm text-base-content/55">图片附件（${escapeHtml(part.mimeType || "未知类型")}）</div>`;
+              return `<div class="rounded-field border border-base-300 bg-base-200 px-3 py-2 text-sm text-base-content/55">${escapeHtml(t("imageAttachment", { type: part.mimeType || t("unknownType") }))}</div>`;
             }
             return "";
           })
@@ -1120,8 +1482,8 @@
         const timestamp = entryTimestamp(entry, null);
         if (message.role === "user") {
           return `<article class="ml-auto max-w-4xl">
-            <div class="mb-1 flex items-center justify-end gap-2 text-xs text-base-content/45"><span>你</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
-            <div class="rounded-box border border-info/25 bg-info/10 p-4 text-sm leading-6">${renderContent(message.content) || '<span class="text-base-content/45">空消息</span>'}</div>
+            <div class="mb-1 flex items-center justify-end gap-2 text-xs text-base-content/45"><span>${t("you")}</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
+            <div class="rounded-box border border-info/25 bg-info/10 p-4 text-sm leading-6">${renderContent(message.content) || `<span class="text-base-content/45">${t("emptyMessage")}</span>`}</div>
           </article>`;
         }
         if (message.role === "assistant") {
@@ -1129,9 +1491,9 @@
           const model = `${message.provider || "unknown"}/${message.responseModel || message.model || "unknown"}`;
           const error = message.errorMessage ? `<div class="mt-3 rounded-field bg-error/10 p-3 text-sm text-error-content">${escapeHtml(message.errorMessage)}</div>` : "";
           return `<article class="mr-auto max-w-4xl">
-            <div class="mb-1 flex flex-wrap items-center gap-2 text-xs text-base-content/45"><span class="font-semibold text-info">Assistant</span><span>${escapeHtml(model)}</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
+            <div class="mb-1 flex flex-wrap items-center gap-2 text-xs text-base-content/45"><span class="font-semibold text-info">${t("assistant")}</span><span>${escapeHtml(model)}</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
             <div class="rounded-box border border-base-300 bg-base-100 p-4 text-sm leading-6 shadow-sm">
-              ${renderContent(message.content) || '<span class="text-base-content/45">空回复</span>'}
+              ${renderContent(message.content) || `<span class="text-base-content/45">${t("emptyReply")}</span>`}
               ${error}
               <div class="mt-4 border-t border-base-300 pt-3 text-xs text-base-content/45">${renderDetailUsage(usage)}</div>
             </div>
@@ -1139,11 +1501,11 @@
         }
         if (message.role === "toolResult") {
           return `<details class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200/70 p-3 text-sm">
-            <summary class="cursor-pointer font-semibold text-base-content/65">工具结果 · ${escapeHtml(message.toolName || message.toolCallId || "未命名工具")} · ${escapeHtml(formatDateTime(timestamp))}</summary>
-            <div class="mt-3 leading-6">${renderContent(message.content) || '<span class="text-base-content/45">空结果</span>'}</div>
+            <summary class="cursor-pointer font-semibold text-base-content/65">${t("toolResult")} · ${escapeHtml(message.toolName || message.toolCallId || t("unnamedTool"))} · ${escapeHtml(formatDateTime(timestamp))}</summary>
+            <div class="mt-3 leading-6">${renderContent(message.content) || `<span class="text-base-content/45">${t("emptyResult")}</span>`}</div>
           </details>`;
         }
-        return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/60">${escapeHtml(message.role || "未知消息")}：${escapeHtml(contentToText(message.content))}</div>`;
+        return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/60">${escapeHtml(message.role || t("unknownMessage"))}：${escapeHtml(contentToText(message.content))}</div>`;
       }
 
       function renderEntry(entry) {
@@ -1151,29 +1513,29 @@
         if (entry.type === "compaction") {
           const usage = normalizeUsage(entry.usage);
           return `<div class="mx-auto max-w-4xl rounded-box border border-warning/25 bg-warning/10 p-4 text-sm">
-            <div class="font-semibold text-warning-content">上下文压缩 · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
-            <div class="conversation-content mt-2 text-warning-content/75">${escapeHtml(entry.summary || "无摘要")}</div>
+            <div class="font-semibold text-warning-content">${t("contextCompaction")} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
+            <div class="conversation-content mt-2 text-warning-content/75">${escapeHtml(entry.summary || t("noSummary"))}</div>
             ${usage ? `<div class="mt-3 text-xs text-warning-content/60">${renderDetailUsage(usage)}</div>` : ""}
           </div>`;
         }
         if (entry.type === "branch_summary") {
           const usage = normalizeUsage(entry.usage);
           return `<div class="mx-auto max-w-4xl rounded-box border border-secondary/25 bg-secondary/10 p-4 text-sm">
-            <div class="font-semibold text-secondary-content">分支摘要 · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
-            <div class="conversation-content mt-2 text-secondary-content/75">${escapeHtml(entry.summary || "无摘要")}</div>
+            <div class="font-semibold text-secondary-content">${t("branchSummary")} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
+            <div class="conversation-content mt-2 text-secondary-content/75">${escapeHtml(entry.summary || t("noSummary"))}</div>
             ${usage ? `<div class="mt-3 text-xs text-secondary-content/60">${renderDetailUsage(usage)}</div>` : ""}
           </div>`;
         }
         if (entry.type === "model_change") {
-          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">切换模型：${escapeHtml(entry.provider)}/${escapeHtml(entry.modelId)} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">${escapeHtml(t("modelChanged", { provider: entry.provider, model: entry.modelId }))} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
         }
         if (entry.type === "thinking_level_change") {
-          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">切换思考级别：${escapeHtml(entry.thinkingLevel)} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">${escapeHtml(t("thinkingLevelChanged", { level: entry.thinkingLevel }))} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
         }
         if (entry.type === "custom_message") {
-          return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/65"><strong>扩展消息</strong><div class="mt-2">${renderContent(entry.content) || "[无文本内容]"}</div></div>`;
+          return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/65"><strong>${t("extensionMessage")}</strong><div class="mt-2">${renderContent(entry.content) || t("noTextContent")}</div></div>`;
         }
-        return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/35">${escapeHtml(entry.type || "未知记录")} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+        return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/35">${escapeHtml(entry.type || t("unknownType"))} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
       }
 
       function activeBranchEntries(entries) {
@@ -1195,7 +1557,18 @@
         const entries = elements.detailMode.value === "active" ? activeBranchEntries(state.detailData.entries || []) : state.detailData.entries || [];
         elements.conversationBody.innerHTML = entries.length
           ? entries.map(renderEntry).join("")
-          : '<div class="py-16 text-center text-base-content/45">这个 session 没有可显示的消息。</div>';
+          : `<div class="py-16 text-center text-base-content/45">${t("noDisplayableMessages")}</div>`;
+      }
+
+      function detailSummaryText(session) {
+        return t("detailSummary", {
+          from: formatDateTime(session.firstAt),
+          to: formatDateTime(session.lastAt),
+          total: formatTokens(session.totals.total),
+          cost: formatCost(session.totals.cost),
+          assistant: formatTokens(session.assistantMessages),
+          user: formatTokens(session.userMessages),
+        });
       }
 
       async function openSession(index) {
@@ -1206,20 +1579,20 @@
         state.detailData = null;
         elements.detailTitle.textContent = session.name;
         elements.detailMeta.textContent = `${session.project} · ${session.cwd} · ${session.id}`;
-        elements.detailSummary.textContent = "正在读取会话内容…";
-        elements.conversationBody.innerHTML = '<div class="py-16 text-center text-base-content/45">正在读取 JSONL…</div>';
+        elements.detailSummary.textContent = t("readingSession");
+        elements.conversationBody.innerHTML = `<div class="py-16 text-center text-base-content/45">${t("readingJsonl")}</div>`;
         elements.detailModal.showModal();
 
         try {
           const parsed = await parseSessionFile(session.file, true);
           if (requestId !== state.detailRequestId) return;
           state.detailData = parsed;
-          elements.detailSummary.textContent = `${formatDateTime(session.firstAt)} → ${formatDateTime(session.lastAt)} · ${formatTokens(session.totals.total)} Token · ${formatCost(session.totals.cost)} · ${session.assistantMessages} 条 Assistant · ${session.userMessages} 条用户消息`;
+          elements.detailSummary.textContent = detailSummaryText(session);
           renderDetailConversation();
         } catch (error) {
           if (requestId !== state.detailRequestId) return;
-          elements.detailSummary.textContent = `读取失败：${error.message}`;
-          elements.conversationBody.innerHTML = '<div class="py-16 text-center text-error">无法读取这个会话文件。</div>';
+          elements.detailSummary.textContent = t("readFailed", { error: error.message });
+          elements.conversationBody.innerHTML = `<div class="py-16 text-center text-error">${t("cannotReadSession")}</div>`;
         }
       }
 
@@ -1235,25 +1608,25 @@
         for (let index = 0; index < state.files.length; index += 1) {
           const file = state.files[index];
           const percentage = Math.round(((index + 1) / state.files.length) * 100);
-          elements.progressLabel.textContent = `正在读取 ${index + 1}/${state.files.length}：${file.name}`;
+          elements.progressLabel.textContent = t("readingFile", { current: index + 1, total: state.files.length, file: file.name });
           elements.progressValue.textContent = `${percentage}%`;
           elements.progressBar.style.width = `${percentage}%`;
           try {
             const session = await parseSessionFile(file);
             if (seenSessionIds.has(session.id)) {
-              state.issues.push(`跳过重复 session：${session.id}（${file.name}）`);
+              state.issues.push({ key: "duplicateSession", values: { id: session.id, file: file.name } });
               continue;
             }
             seenSessionIds.add(session.id);
             state.sessions.push(session);
             if (session.malformedLines) {
-              state.issues.push(`${session.relativePath} 有 ${session.malformedLines} 行 JSON 无法解析。`);
+              state.issues.push({ key: "malformedLines", values: { file: session.relativePath, count: session.malformedLines } });
             }
             if (session.missingUsage) {
-              state.issues.push(`${session.relativePath} 有 ${session.missingUsage} 条 Assistant 记录缺少 usage，相关调用会计入次数但不会产生 Token。`);
+              state.issues.push({ key: "missingUsage", values: { file: session.relativePath, count: session.missingUsage } });
             }
           } catch (error) {
-            state.issues.push(`${file.webkitRelativePath || file.name}：${error.message}`);
+            state.issues.push({ key: "invalidSessionFile", values: { file: file.webkitRelativePath || file.name, error: error.message } });
           }
         }
 
@@ -1262,7 +1635,7 @@
         elements.dashboard.classList.remove("hidden");
         elements.calculateButton.disabled = state.files.length === 0;
         setActiveRange("all");
-        setStatus(`完成：读取 ${numberFormatter.format(state.sessions.length)} 个有效 session。`, state.sessions.length ? "text-success" : "text-warning");
+        setStatus("complete", { count: formatTokens(state.sessions.length) }, state.sessions.length ? "text-success" : "text-warning");
         renderIssues();
         refreshDashboard();
       }
@@ -1272,6 +1645,7 @@
       elements.directoryPicker.addEventListener("change", (event) => addFiles(event.target.files));
       elements.filePicker.addEventListener("change", (event) => addFiles(event.target.files));
       elements.calculateButton.addEventListener("click", calculate);
+      elements.languageSelect.addEventListener("change", (event) => applyLanguage(event.target.value));
       elements.timezoneSelect.addEventListener("change", refreshDashboard);
       elements.applyFiltersButton.addEventListener("click", refreshDashboard);
       elements.fromDate.addEventListener("change", () => {
@@ -1298,7 +1672,7 @@
         if (button) openSession(Number(button.dataset.sessionIndex));
       });
 
-      updateSelectionSummary();
+      applyLanguage(state.language);
     </script>
   </body>
 </html>
