@@ -1,6 +1,5 @@
-# IDE and local agent files
+# IDE files
 .idea/
-.agents/
 
 # OS files
 .DS_Store
