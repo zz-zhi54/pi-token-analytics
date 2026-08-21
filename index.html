@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="在本地分析 Pi JSONL 会话中的 Token 使用量与费用" />
+    <title>Pi Token Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      body {
+        min-width: 320px;
+        background:
+          radial-gradient(circle at 8% 0%, color-mix(in oklab, var(--color-info) 14%, transparent), transparent 28rem),
+          radial-gradient(circle at 92% 8%, color-mix(in oklab, var(--color-secondary) 12%, transparent), transparent 24rem),
+          var(--color-base-200);
+      }
+
+      .method-formula {
+        font-variant-ligatures: none;
+        word-break: break-word;
+      }
+
+      .conversation-content {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .conversation-scroll {
+        max-height: 68vh;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+      }
+
+      .bar-track {
+        height: 11rem;
+      }
+
+      .soft-grid {
+        background-image: linear-gradient(color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px, transparent 1px),
+          linear-gradient(90deg, color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px, transparent 1px);
+        background-size: 1.5rem 1.5rem;
+      }
+
+      @media (max-width: 640px) {
+        .conversation-scroll {
+          max-height: 62vh;
+        }
+      }
+    </style>
+  </head>
+  <body class="text-base-content">
+    <header class="mx-auto max-w-[1800px] px-4 pb-8 pt-8 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p class="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-info">Local analytics · Pi sessions</p>
+          <h1 class="text-4xl font-black tracking-tight sm:text-5xl">Pi Token Analytics</h1>
+          <p class="mt-3 max-w-2xl text-base-content/65 sm:text-lg">
+            汇总 <code class="rounded bg-base-300 px-1.5 py-0.5 text-sm">~/.pi/agent/sessions</code> 下所有项目的会话消耗，并随时查看原始对话。
+          </p>
+        </div>
+        <div class="rounded-box border border-success/25 bg-success/10 px-4 py-3 text-sm text-success">
+          <div class="font-semibold">只在浏览器本地处理</div>
+          <div class="mt-1 text-success/70">不会上传会话、命令输出或项目内容</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-[1800px] space-y-6 px-4 pb-16 sm:px-6 lg:px-8">
+      <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+        <div class="card-body gap-5">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">How it works</p>
+            <h2 class="card-title mt-1 text-2xl">统计口径</h2>
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-3">
+            <div class="rounded-box bg-base-200 p-4">
+              <div class="text-sm font-semibold">数据来源</div>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">
+                读取 Pi 持久化的 JSONL 会话文件。每一行都是一个 session entry，页面不根据文字长度估算 Token。
+              </p>
+            </div>
+            <div class="rounded-box bg-base-200 p-4">
+              <div class="text-sm font-semibold">四类 Token</div>
+              <p class="method-formula mt-2 rounded-field bg-base-300 px-3 py-2 font-mono text-sm leading-6 text-info">
+                total = input + output + cacheRead + cacheWrite
+              </p>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">reasoning 已包含在 output 中，不会再次相加。</p>
+            </div>
+            <div class="rounded-box bg-base-200 p-4">
+              <div class="text-sm font-semibold">费用与时间</div>
+              <p class="mt-2 text-sm leading-6 text-base-content/65">
+                费用直接读取 <code>usage.cost.total</code>；按每次记录的时间归入天和月，默认使用本地时区。
+              </p>
+            </div>
+          </div>
+
+          <div class="rounded-box border border-warning/25 bg-warning/10 p-4 text-sm leading-6 text-warning-content/85">
+            Pi 的 session 统计会包含已经发生过的历史分支、压缩和摘要消耗。页面会将 assistant、toolResult、compaction、branch_summary 中保存的 usage 一并统计；缺少 usage 的记录不会被猜测，并会在结果中提示。
+          </div>
+        </div>
+      </section>
+
+      <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+        <div class="card-body gap-5">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">Step 01</p>
+              <h2 class="card-title mt-1 text-2xl">选择 Pi 会话目录</h2>
+              <p class="mt-2 text-sm text-base-content/60">建议选择整个 <code>~/.pi/agent/sessions</code>，这样可以覆盖所有项目。</p>
+            </div>
+            <div class="text-sm text-base-content/55">支持多选 JSONL 文件</div>
+          </div>
+
+          <input id="directoryPicker" type="file" webkitdirectory directory multiple class="hidden" />
+          <input id="filePicker" type="file" accept=".jsonl,application/json" multiple class="hidden" />
+
+          <div class="flex flex-wrap gap-3">
+            <button id="chooseDirectoryButton" class="btn">选择 sessions 目录</button>
+            <button id="chooseFilesButton" class="btn">添加 JSONL 文件</button>
+            <button id="calculateButton" class="btn btn-primary" disabled>开始计算</button>
+          </div>
+
+          <div class="rounded-box bg-base-200 px-4 py-3">
+            <div id="selectionSummary" class="text-sm text-base-content/70">尚未选择文件</div>
+            <div id="progressWrap" class="mt-3 hidden">
+              <div class="mb-1 flex justify-between text-xs text-base-content/55">
+                <span id="progressLabel">准备读取</span>
+                <span id="progressValue">0%</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-base-300">
+                <div id="progressBar" class="h-full rounded-full bg-info transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+            <p id="loadStatus" class="mt-2 text-sm" role="status"></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="hidden space-y-6" aria-live="polite">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-info">Step 02</p>
+            <h2 class="mt-1 text-2xl font-bold">整体使用情况</h2>
+            <p id="resultSummary" class="mt-2 text-sm text-base-content/60"></p>
+          </div>
+          <p id="lastUpdated" class="text-sm text-base-content/50"></p>
+        </div>
+
+        <div id="kpiGrid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></div>
+
+        <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+          <div class="card-body gap-4">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h3 class="card-title">筛选和显示设置</h3>
+                <p class="mt-1 text-sm text-base-content/55">上面选择时间范围，下面分别按天和按月分组；两者不是重复查询。</p>
+              </div>
+              <button id="resetFiltersButton" class="btn btn-sm">重置筛选</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 rounded-box bg-base-200 p-3">
+              <span class="mr-1 text-sm font-semibold">快速查询</span>
+              <button class="range-button btn btn-sm btn-active" data-range="all">全部</button>
+              <button class="range-button btn btn-sm" data-range="1">1 天</button>
+              <button class="range-button btn btn-sm" data-range="3">3 天</button>
+              <button class="range-button btn btn-sm" data-range="7">7 天</button>
+              <button class="range-button btn btn-sm" data-range="30">30 天</button>
+              <button class="range-button btn btn-sm" data-range="90">90 天</button>
+              <span class="ml-auto text-xs text-base-content/50">按已加载数据的最新日期计算</span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              <label class="fieldset gap-1 p-0">
+                <span class="label p-0 text-xs text-base-content/60">时区</span>
+                <select id="timezoneSelect" class="select select-sm w-full">
+                  <option value="local">本地时区</option>
+                  <option value="utc">UTC</option>
+                </select>
+              </label>
+              <label class="fieldset gap-1 p-0">
+                <span class="label p-0 text-xs text-base-content/60">开始日期</span>
+                <input id="fromDate" type="date" class="input input-sm w-full" />
+              </label>
+              <label class="fieldset gap-1 p-0">
+                <span class="label p-0 text-xs text-base-content/60">结束日期</span>
+                <input id="toDate" type="date" class="input input-sm w-full" />
+              </label>
+              <div class="flex items-end">
+                <button id="applyFiltersButton" class="btn btn-sm w-full">查询统计</button>
+              </div>
+              <div class="flex items-end">
+                <div id="filterSummary" class="w-full rounded-field bg-base-200 px-3 py-2 text-sm text-base-content/60">当前显示全部记录</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid gap-6">
+          <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+            <div class="card-body">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="card-title">Token 趋势</h3>
+                  <p class="mt-1 text-sm text-base-content/55">最近 30 个有记录日期，总高度按当天总 Token 比例显示。</p>
+                </div>
+                <span class="text-xs text-base-content/45">按日</span>
+              </div>
+              <div id="trendChart" class="soft-grid mt-5 flex min-h-52 items-end gap-2 overflow-x-auto rounded-box p-4"></div>
+            </div>
+          </section>
+
+          <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+            <div class="card-body">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="card-title">按渠道 / 模型汇总</h3>
+                  <p class="mt-1 text-sm text-base-content/55">分别显示 provider 渠道、模型以及四类 Token；工具和摘要 usage 仍计入总量，但不混入这里。</p>
+                </div>
+              </div>
+              <div class="mt-4 overflow-hidden">
+                <table class="table table-xs w-full table-fixed table-zebra">
+                  <thead>
+                    <tr>
+                      <th>渠道</th>
+                      <th>模型</th>
+                      <th>输入</th>
+                      <th>输出</th>
+                      <th>Cache Read</th>
+                      <th>Cache Write</th>
+                      <th>总量</th>
+                      <th>调用</th>
+                      <th>费用</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modelTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="grid gap-6">
+          <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+            <div class="card-body">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="card-title">每日明细</h3>
+                  <p class="mt-1 text-sm text-base-content/55">四类 Token、总量、调用次数和费用。</p>
+                </div>
+              </div>
+              <div class="mt-4 overflow-hidden">
+                <table class="table table-xs w-full table-fixed table-zebra">
+                  <thead>
+                    <tr>
+                      <th>日期</th>
+                      <th>输入</th>
+                      <th>输出</th>
+                      <th>Cache Read</th>
+                      <th>Cache Write</th>
+                      <th>总量</th>
+                      <th>调用</th>
+                      <th>费用</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dailyTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+            <div class="card-body">
+              <div class="flex items-start justify-between gap-4">
+                <div>
+                  <h3 class="card-title">月度汇总</h3>
+                  <p class="mt-1 text-sm text-base-content/55">与上面的时间范围相同，按月份合并显示。</p>
+                </div>
+              </div>
+              <div class="mt-4 overflow-hidden">
+                <table class="table table-xs w-full table-fixed table-zebra">
+                  <thead>
+                    <tr>
+                      <th>月份</th>
+                      <th>输入</th>
+                      <th>输出</th>
+                      <th>Cache Read</th>
+                      <th>Cache Write</th>
+                      <th>总量</th>
+                      <th>调用</th>
+                      <th>费用</th>
+                    </tr>
+                  </thead>
+                  <tbody id="monthlyTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+          <div class="card-body">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 class="card-title">按项目</h3>
+                <p class="mt-1 text-sm text-base-content/55">项目名称来自 session header 中保存的 cwd。</p>
+              </div>
+              <span id="projectCount" class="text-sm text-base-content/50"></span>
+            </div>
+            <div class="mt-4 overflow-hidden">
+              <table class="table table-xs w-full table-fixed table-zebra">
+                <thead>
+                  <tr>
+                    <th>项目</th>
+                    <th>调用</th>
+                    <th>输入</th>
+                    <th>输出</th>
+                    <th>缓存</th>
+                    <th>总量</th>
+                    <th>费用</th>
+                  </tr>
+                </thead>
+                <tbody id="projectTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="card border border-base-300 bg-base-100/90 shadow-xl">
+          <div class="card-body">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 class="card-title">会话与对话</h3>
+                <p class="mt-1 text-sm text-base-content/55">点击“打开对话”可以查看该 session 的聊天内容和工具记录。</p>
+              </div>
+              <span id="sessionCount" class="text-sm text-base-content/50"></span>
+            </div>
+            <div class="mt-4 overflow-hidden">
+              <table class="table table-xs w-full table-fixed table-zebra">
+                <thead>
+                  <tr>
+                    <th>项目 / 会话</th>
+                    <th>时间</th>
+                    <th>输入</th>
+                    <th>输出</th>
+                    <th>缓存</th>
+                    <th>总量</th>
+                    <th>费用</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sessionTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="issuesPanel" class="hidden rounded-box border border-warning/25 bg-warning/10 p-4 text-sm text-warning-content/85">
+          <div class="font-semibold">解析提示</div>
+          <ul id="issuesList" class="mt-2 list-disc space-y-1 pl-5"></ul>
+        </section>
+      </section>
+    </main>
+
+    <dialog id="detailModal" class="modal">
+      <div class="modal-box flex h-[90vh] w-11/12 max-w-6xl flex-col gap-4 p-4 sm:p-6">
+        <div class="flex flex-col gap-3 border-b border-base-300 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-info">Session detail</p>
+            <h3 id="detailTitle" class="mt-1 truncate text-xl font-bold">对话详情</h3>
+            <p id="detailMeta" class="mt-1 break-all text-sm text-base-content/55"></p>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="detailMode" class="select select-sm" aria-label="对话分支显示模式">
+              <option value="active">当前分支</option>
+              <option value="all">全部记录</option>
+            </select>
+            <form method="dialog"><button class="btn btn-sm">关闭</button></form>
+          </div>
+        </div>
+        <div id="detailSummary" class="rounded-box bg-base-200 px-4 py-3 text-sm text-base-content/70"></div>
+        <div id="conversationBody" class="conversation-scroll space-y-4"></div>
+      </div>
+      <form method="dialog" class="modal-backdrop"><button>关闭</button></form>
+    </dialog>
+
+    <script>
+      const state = {
+        files: [],
+        sessions: [],
+        issues: [],
+        detailSession: null,
+        detailData: null,
+        detailRequestId: 0,
+      };
+
+      const numberFormatter = new Intl.NumberFormat("zh-CN");
+      const elements = {
+        directoryPicker: document.querySelector("#directoryPicker"),
+        filePicker: document.querySelector("#filePicker"),
+        chooseDirectoryButton: document.querySelector("#chooseDirectoryButton"),
+        chooseFilesButton: document.querySelector("#chooseFilesButton"),
+        calculateButton: document.querySelector("#calculateButton"),
+        selectionSummary: document.querySelector("#selectionSummary"),
+        progressWrap: document.querySelector("#progressWrap"),
+        progressLabel: document.querySelector("#progressLabel"),
+        progressValue: document.querySelector("#progressValue"),
+        progressBar: document.querySelector("#progressBar"),
+        loadStatus: document.querySelector("#loadStatus"),
+        dashboard: document.querySelector("#dashboard"),
+        resultSummary: document.querySelector("#resultSummary"),
+        lastUpdated: document.querySelector("#lastUpdated"),
+        kpiGrid: document.querySelector("#kpiGrid"),
+        timezoneSelect: document.querySelector("#timezoneSelect"),
+        fromDate: document.querySelector("#fromDate"),
+        toDate: document.querySelector("#toDate"),
+        resetFiltersButton: document.querySelector("#resetFiltersButton"),
+        applyFiltersButton: document.querySelector("#applyFiltersButton"),
+        rangeButtons: document.querySelectorAll(".range-button"),
+        filterSummary: document.querySelector("#filterSummary"),
+        trendChart: document.querySelector("#trendChart"),
+        modelTableBody: document.querySelector("#modelTableBody"),
+        dailyTableBody: document.querySelector("#dailyTableBody"),
+        monthlyTableBody: document.querySelector("#monthlyTableBody"),
+        projectTableBody: document.querySelector("#projectTableBody"),
+        projectCount: document.querySelector("#projectCount"),
+        sessionTableBody: document.querySelector("#sessionTableBody"),
+        sessionCount: document.querySelector("#sessionCount"),
+        issuesPanel: document.querySelector("#issuesPanel"),
+        issuesList: document.querySelector("#issuesList"),
+        detailModal: document.querySelector("#detailModal"),
+        detailTitle: document.querySelector("#detailTitle"),
+        detailMeta: document.querySelector("#detailMeta"),
+        detailMode: document.querySelector("#detailMode"),
+        detailSummary: document.querySelector("#detailSummary"),
+        conversationBody: document.querySelector("#conversationBody"),
+      };
+
+      function createTotals() {
+        return { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0, cost: 0 };
+      }
+
+      function addTotals(target, source) {
+        target.input += source.input;
+        target.output += source.output;
+        target.cacheRead += source.cacheRead;
+        target.cacheWrite += source.cacheWrite;
+        target.total += source.total;
+        target.cost += source.cost;
+        return target;
+      }
+
+      function zeroTotals() {
+        return createTotals();
+      }
+
+      function numeric(value) {
+        return typeof value === "number" && Number.isFinite(value) ? value : 0;
+      }
+
+      function normalizeUsage(usage) {
+        if (!usage || typeof usage !== "object") return null;
+        const hasUsageField = ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"].some((key) =>
+          Object.prototype.hasOwnProperty.call(usage, key),
+        );
+        if (!hasUsageField) return null;
+
+        const input = numeric(usage.input);
+        const output = numeric(usage.output);
+        const cacheRead = numeric(usage.cacheRead);
+        const cacheWrite = numeric(usage.cacheWrite);
+        const cost = usage.cost && typeof usage.cost === "object" ? numeric(usage.cost.total) : numeric(usage.cost);
+        return {
+          input,
+          output,
+          cacheRead,
+          cacheWrite,
+          total: input + output + cacheRead + cacheWrite,
+          cost,
+        };
+      }
+
+      function fileKey(file) {
+        return [file.webkitRelativePath || file.name, file.size, file.lastModified].join("::");
+      }
+
+      function isSessionFile(file) {
+        const name = file.name.toLowerCase();
+        return name.endsWith(".jsonl") || name.endsWith(".json");
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function shorten(value, maxLength = 100) {
+        const text = String(value ?? "").trim();
+        return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text;
+      }
+
+      function contentToText(content) {
+        if (typeof content === "string") return content;
+        if (!Array.isArray(content)) return "";
+        return content
+          .map((part) => {
+            if (typeof part === "string") return part;
+            if (!part || typeof part !== "object") return "";
+            if (part.type === "text" || part.type === "thinking") return part.text || "";
+            if (part.type === "toolCall") return `[工具调用：${part.name || "未知工具"}]`;
+            if (part.type === "image") return "[图片]";
+            return "";
+          })
+          .filter(Boolean)
+          .join("\n");
+      }
+
+      function toTimestamp(value) {
+        if (typeof value === "number" && Number.isFinite(value)) {
+          const milliseconds = value < 100000000000 ? value * 1000 : value;
+          return Number.isFinite(milliseconds) ? milliseconds : null;
+        }
+        if (typeof value === "string" && value.trim()) {
+          const parsed = Date.parse(value);
+          return Number.isFinite(parsed) ? parsed : null;
+        }
+        return null;
+      }
+
+      function entryTimestamp(entry, headerTimestamp) {
+        return toTimestamp(entry?.timestamp) ?? toTimestamp(entry?.message?.timestamp) ?? headerTimestamp ?? Date.now();
+      }
+
+      function getDateParts(timestamp) {
+        const date = new Date(timestamp);
+        const useUtc = elements.timezoneSelect.value === "utc";
+        return {
+          year: useUtc ? date.getUTCFullYear() : date.getFullYear(),
+          month: (useUtc ? date.getUTCMonth() : date.getMonth()) + 1,
+          day: useUtc ? date.getUTCDate() : date.getDate(),
+        };
+      }
+
+      function bucketKey(timestamp, granularity) {
+        const parts = getDateParts(timestamp);
+        const year = String(parts.year).padStart(4, "0");
+        const month = String(parts.month).padStart(2, "0");
+        if (granularity === "month") return `${year}-${month}`;
+        return `${year}-${month}-${String(parts.day).padStart(2, "0")}`;
+      }
+
+      function shiftDateKey(key, offsetDays) {
+        const [year, month, day] = key.split("-").map(Number);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        date.setUTCDate(date.getUTCDate() + offsetDays);
+        return [date.getUTCFullYear(), String(date.getUTCMonth() + 1).padStart(2, "0"), String(date.getUTCDate()).padStart(2, "0")].join("-");
+      }
+
+      function latestLoadedDateKey() {
+        const latestTimestamp = Math.max(...state.sessions.map((session) => session.lastAt || 0));
+        return latestTimestamp > 0 ? bucketKey(latestTimestamp, "day") : "";
+      }
+
+      function setActiveRange(range) {
+        elements.rangeButtons.forEach((button) => {
+          button.classList.toggle("btn-active", button.dataset.range === String(range));
+        });
+      }
+
+      function applyQuickRange(range) {
+        if (range === "all") {
+          elements.fromDate.value = "";
+          elements.toDate.value = "";
+        } else {
+          const latestDate = latestLoadedDateKey();
+          if (!latestDate) return;
+          const days = Number(range);
+          elements.fromDate.value = shiftDateKey(latestDate, -(days - 1));
+          elements.toDate.value = latestDate;
+        }
+        setActiveRange(range);
+        refreshDashboard();
+      }
+
+      function formatTokens(value) {
+        return numberFormatter.format(Math.round(numeric(value)));
+      }
+
+      function formatCost(value) {
+        return `$${numeric(value).toFixed(4)}`;
+      }
+
+      function formatDateTime(timestamp) {
+        if (!timestamp) return "未知时间";
+        const options = { dateStyle: "medium", timeStyle: "short" };
+        if (elements.timezoneSelect.value === "utc") options.timeZone = "UTC";
+        return new Intl.DateTimeFormat("zh-CN", options).format(new Date(timestamp));
+      }
+
+      function projectName(cwd) {
+        const parts = String(cwd || "未知项目").split(/[\\/]/).filter(Boolean);
+        return parts.at(-1) || cwd || "未知项目";
+      }
+
+      function setStatus(message, tone = "text-base-content/65") {
+        elements.loadStatus.className = `mt-2 text-sm ${tone}`;
+        elements.loadStatus.textContent = message;
+      }
+
+      function updateSelectionSummary() {
+        const count = state.files.length;
+        elements.selectionSummary.textContent = count
+          ? `已选择 ${numberFormatter.format(count)} 个候选文件。点击“开始计算”后才会读取内容。`
+          : "尚未选择文件";
+        elements.calculateButton.disabled = count === 0;
+      }
+
+      function addFiles(fileList) {
+        const incoming = Array.from(fileList || []).filter(isSessionFile);
+        const filesByKey = new Map(state.files.map((file) => [fileKey(file), file]));
+        for (const file of incoming) filesByKey.set(fileKey(file), file);
+        state.files = Array.from(filesByKey.values());
+        updateSelectionSummary();
+        setStatus(incoming.length ? `已添加 ${incoming.length} 个文件。` : "没有发现 JSONL 文件。", incoming.length ? "text-success" : "text-warning");
+      }
+
+      async function parseSessionFile(file, includeEntries = false) {
+        const text = await file.text();
+        const lines = text.split(/\r?\n/);
+        let header = null;
+        const entries = [];
+        let malformedLines = 0;
+
+        for (let lineNumber = 0; lineNumber < lines.length; lineNumber += 1) {
+          const line = lines[lineNumber].trim().replace(/^\uFEFF/, "");
+          if (!line) continue;
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed?.type === "session" && !header) {
+              header = parsed;
+            } else if (parsed && typeof parsed === "object") {
+              entries.push(parsed);
+            }
+          } catch {
+            malformedLines += 1;
+          }
+        }
+
+        if (!header || typeof header.id !== "string") {
+          throw new Error("找不到有效的 session header");
+        }
+
+        const headerTimestamp = toTimestamp(header.timestamp);
+        const events = [];
+        const firstUser = entries.find((entry) => entry.type === "message" && entry.message?.role === "user");
+        let sessionName = "";
+        let firstAt = headerTimestamp;
+        let lastAt = headerTimestamp;
+        let totalMessages = 0;
+        let userMessages = 0;
+        let assistantMessages = 0;
+        let toolResults = 0;
+        let toolCalls = 0;
+        let missingUsage = 0;
+
+        for (const entry of entries) {
+          const timestamp = entryTimestamp(entry, headerTimestamp);
+          firstAt = firstAt === null ? timestamp : Math.min(firstAt, timestamp);
+          lastAt = lastAt === null ? timestamp : Math.max(lastAt, timestamp);
+
+          if (entry.type === "session_info" && typeof entry.name === "string" && entry.name.trim()) {
+            sessionName = entry.name.trim();
+          }
+
+          if (entry.type === "message") {
+            totalMessages += 1;
+            const message = entry.message || {};
+            if (message.role === "user") userMessages += 1;
+            if (message.role === "toolResult") toolResults += 1;
+
+            if (message.role === "assistant") {
+              assistantMessages += 1;
+              const content = Array.isArray(message.content) ? message.content : [];
+              const currentToolCalls = content.filter((part) => part?.type === "toolCall").length;
+              toolCalls += currentToolCalls;
+              const usage = normalizeUsage(message.usage);
+              if (!usage) missingUsage += 1;
+              const provider = message.provider || "unknown";
+              const modelId = message.responseModel || message.model || "unknown";
+              events.push({
+                timestamp,
+                kind: "assistant",
+                provider,
+                modelId,
+                model: `${provider}/${modelId}`,
+                usage: usage || zeroTotals(),
+                calls: 1,
+                toolCalls: currentToolCalls,
+                toolResults: 0,
+                hasUsage: Boolean(usage),
+              });
+            } else if (message.role === "toolResult") {
+              const usage = normalizeUsage(message.usage);
+              events.push({
+                timestamp,
+                kind: "toolResult",
+                provider: "Tools",
+                modelId: "summaries",
+                model: "Tools / summaries",
+                usage: usage || zeroTotals(),
+                calls: 0,
+                toolCalls: 0,
+                toolResults: 1,
+                hasUsage: Boolean(usage),
+              });
+            }
+          } else if (entry.type === "compaction" || entry.type === "branch_summary") {
+            const usage = normalizeUsage(entry.usage);
+            events.push({
+              timestamp,
+              kind: "summary",
+              provider: "Tools",
+              modelId: "summaries",
+              model: "Tools / summaries",
+              usage: usage || zeroTotals(),
+              calls: 0,
+              toolCalls: 0,
+              toolResults: 0,
+              summaries: 1,
+              hasUsage: Boolean(usage),
+            });
+          }
+        }
+
+        const totals = createTotals();
+        for (const event of events) addTotals(totals, event.usage);
+        const cwd = header.cwd || file.webkitRelativePath || file.name;
+        const project = projectName(cwd);
+        for (const event of events) event.project = cwd;
+        const fallbackName = contentToText(firstUser?.message?.content) || header.id.slice(0, 12);
+
+        return {
+          id: header.id,
+          cwd,
+          project,
+          name: sessionName || shorten(fallbackName, 80),
+          relativePath: file.webkitRelativePath || file.name,
+          file,
+          fileTextSize: text.length,
+          firstAt,
+          lastAt,
+          totalMessages,
+          userMessages,
+          assistantMessages,
+          toolResults,
+          toolCalls,
+          missingUsage,
+          malformedLines,
+          totals,
+          events,
+          header: includeEntries ? header : undefined,
+          entries: includeEntries ? entries : undefined,
+        };
+      }
+
+      function filteredEvents(session) {
+        return session.events.filter((event) => {
+          const key = bucketKey(event.timestamp, "day");
+          const from = elements.fromDate.value;
+          const to = elements.toDate.value;
+          return (!from || key >= from) && (!to || key <= to);
+        });
+      }
+
+      function summarizeEvents(events) {
+        const totals = createTotals();
+        const result = { totals, calls: 0, toolCalls: 0, toolResults: 0, summaries: 0, records: events.length };
+        for (const event of events) {
+          addTotals(totals, event.usage);
+          result.calls += event.calls || 0;
+          result.toolCalls += event.toolCalls || 0;
+          result.toolResults += event.toolResults || 0;
+          result.summaries += event.summaries || 0;
+        }
+        return result;
+      }
+
+      function bucketRows(events, granularity) {
+        const rows = new Map();
+        for (const event of events) {
+          const key = bucketKey(event.timestamp, granularity);
+          if (!rows.has(key)) {
+            rows.set(key, {
+              key,
+              totals: createTotals(),
+              calls: 0,
+              toolCalls: 0,
+              toolResults: 0,
+              summaries: 0,
+            });
+          }
+          const row = rows.get(key);
+          addTotals(row.totals, event.usage);
+          row.calls += event.calls || 0;
+          row.toolCalls += event.toolCalls || 0;
+          row.toolResults += event.toolResults || 0;
+          row.summaries += event.summaries || 0;
+        }
+        return Array.from(rows.values()).sort((a, b) => b.key.localeCompare(a.key));
+      }
+
+      function groupRows(events, keyGetter) {
+        const groups = new Map();
+        for (const event of events) {
+          const key = keyGetter(event);
+          if (!groups.has(key)) {
+            groups.set(key, { key, totals: createTotals(), calls: 0, toolCalls: 0, toolResults: 0 });
+          }
+          const group = groups.get(key);
+          addTotals(group.totals, event.usage);
+          group.calls += event.calls || 0;
+          group.toolCalls += event.toolCalls || 0;
+          group.toolResults += event.toolResults || 0;
+        }
+        return Array.from(groups.values()).sort((a, b) => b.totals.total - a.totals.total || a.key.localeCompare(b.key));
+      }
+
+      function groupModelRows(events) {
+        const groups = new Map();
+        for (const event of events) {
+          const provider = event.provider || "unknown";
+          const modelId = event.modelId || "unknown";
+          const key = `${provider}\u0000${modelId}`;
+          if (!groups.has(key)) {
+            groups.set(key, { provider, modelId, totals: createTotals(), calls: 0 });
+          }
+          const group = groups.get(key);
+          addTotals(group.totals, event.usage);
+          group.calls += event.calls || 0;
+        }
+        return Array.from(groups.values()).sort((a, b) => b.totals.total - a.totals.total || a.provider.localeCompare(b.provider) || a.modelId.localeCompare(b.modelId));
+      }
+
+      function cell(value, className = "") {
+        return `<td class="whitespace-normal break-words ${className}">${value}</td>`;
+      }
+
+      function emptyRow(colspan, message = "暂无记录") {
+        return `<tr><td colspan="${colspan}" class="py-10 text-center text-base-content/45">${message}</td></tr>`;
+      }
+
+      function renderKpis(summary) {
+        const cards = [
+          ["总 Token", summary.totals.total, "四类 Token 相加", "text-info"],
+          ["输入 Token", summary.totals.input, "usage.input", ""],
+          ["输出 Token", summary.totals.output, "usage.output（含 reasoning）", ""],
+          ["Cache Read", summary.totals.cacheRead, "usage.cacheRead", ""],
+          ["Cache Write", summary.totals.cacheWrite, "usage.cacheWrite", ""],
+          ["LLM 调用", summary.calls, "assistant 消息数量", ""],
+          ["Tool Calls", summary.toolCalls, "assistant 中的工具调用", ""],
+          ["费用（USD）", formatCost(summary.totals.cost), "usage.cost.total", "text-success"],
+        ];
+        elements.kpiGrid.innerHTML = cards
+          .map(
+            ([title, value, description, valueClass]) => `
+              <div class="stats w-full border border-base-300 bg-base-100/90 shadow-sm">
+                <div class="stat min-w-0">
+                  <div class="stat-title">${title}</div>
+                  <div class="stat-value break-all text-2xl ${valueClass}">${typeof value === "number" ? formatTokens(value) : value}</div>
+                  <div class="stat-desc">${description}</div>
+                </div>
+              </div>`,
+          )
+          .join("");
+      }
+
+      function renderBucketTables(dailyRows, monthlyRows) {
+        const render = (rows, target, label) => {
+          if (!rows.length) {
+            target.innerHTML = emptyRow(8, `暂无${label}记录`);
+            return;
+          }
+          target.innerHTML = rows
+            .map(
+              (row) => `<tr>
+                ${cell(escapeHtml(row.key), "font-medium")}
+                ${cell(formatTokens(row.totals.input))}
+                ${cell(formatTokens(row.totals.output))}
+                ${cell(formatTokens(row.totals.cacheRead))}
+                ${cell(formatTokens(row.totals.cacheWrite))}
+                ${cell(`<strong>${formatTokens(row.totals.total)}</strong>`)}
+                ${cell(formatTokens(row.calls))}
+                ${cell(formatCost(row.totals.cost))}
+              </tr>`,
+            )
+            .join("");
+        };
+        render(dailyRows, elements.dailyTableBody, "按天");
+        render(monthlyRows, elements.monthlyTableBody, "按月");
+      }
+
+      function renderTrend(rows) {
+        if (!rows.length) {
+          elements.trendChart.innerHTML = '<div class="m-auto text-sm text-base-content/45">暂无趋势数据</div>';
+          return;
+        }
+        const chartRows = rows.slice(0, 30).reverse();
+        const max = Math.max(...chartRows.map((row) => row.totals.total), 1);
+        elements.trendChart.innerHTML = chartRows
+          .map((row) => {
+            const height = row.totals.total ? Math.max((row.totals.total / max) * 100, 4) : 2;
+            return `<div class="flex min-w-12 flex-1 flex-col items-center gap-2" title="${escapeHtml(row.key)}：${formatTokens(row.totals.total)} Token">
+              <div class="bar-track flex w-full items-end rounded-box bg-base-200 p-1">
+                <div class="w-full rounded-selector bg-info transition-all" style="height: ${height}%"></div>
+              </div>
+              <span class="text-[0.65rem] text-base-content/55">${escapeHtml(row.key.slice(5))}</span>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function renderModelTable(rows) {
+        if (!rows.length) {
+          elements.modelTableBody.innerHTML = emptyRow(9);
+          return;
+        }
+        elements.modelTableBody.innerHTML = rows
+          .map(
+            (row) => `<tr>
+              ${cell(escapeHtml(row.provider), "font-medium")}
+              ${cell(escapeHtml(row.modelId), "max-w-64 whitespace-normal break-words")}
+              ${cell(formatTokens(row.totals.input))}
+              ${cell(formatTokens(row.totals.output))}
+              ${cell(formatTokens(row.totals.cacheRead))}
+              ${cell(formatTokens(row.totals.cacheWrite))}
+              ${cell(`<strong>${formatTokens(row.totals.total)}</strong>`)}
+              ${cell(formatTokens(row.calls))}
+              ${cell(formatCost(row.totals.cost))}
+            </tr>`,
+          )
+          .join("");
+      }
+
+      function renderProjectTable(rows) {
+        if (!rows.length) {
+          elements.projectTableBody.innerHTML = emptyRow(7);
+          return;
+        }
+        elements.projectTableBody.innerHTML = rows
+          .map((row) => {
+            const cache = row.totals.cacheRead + row.totals.cacheWrite;
+            return `<tr>
+              ${cell(escapeHtml(row.key), "max-w-72 whitespace-normal break-words font-medium")}
+              ${cell(formatTokens(row.calls))}
+              ${cell(formatTokens(row.totals.input))}
+              ${cell(formatTokens(row.totals.output))}
+              ${cell(formatTokens(cache))}
+              ${cell(`<strong>${formatTokens(row.totals.total)}</strong>`)}
+              ${cell(formatCost(row.totals.cost))}
+            </tr>`;
+          })
+          .join("");
+      }
+
+      function renderSessionTable() {
+        const rows = state.sessions
+          .map((session) => ({ session, summary: summarizeEvents(filteredEvents(session)) }))
+          .filter(({ session, summary }) => {
+            const hasDateFilter = elements.fromDate.value || elements.toDate.value;
+            return !hasDateFilter || summary.records > 0;
+          });
+
+        elements.sessionCount.textContent = `${numberFormatter.format(rows.length)} 个会话`;
+        if (!rows.length) {
+          elements.sessionTableBody.innerHTML = emptyRow(8, "当前筛选条件下没有会话");
+          return;
+        }
+
+        elements.sessionTableBody.innerHTML = rows
+          .map(({ session, summary }) => {
+            const cache = summary.totals.cacheRead + summary.totals.cacheWrite;
+            const index = state.sessions.indexOf(session);
+            return `<tr>
+              <td class="min-w-64 max-w-96 whitespace-normal">
+                <div class="font-semibold">${escapeHtml(session.project)}</div>
+                <div class="mt-1 break-words text-xs text-base-content/55">${escapeHtml(session.name)}</div>
+                <div class="mt-1 break-all text-[0.65rem] text-base-content/35">${escapeHtml(session.relativePath)}</div>
+              </td>
+              <td class="whitespace-nowrap text-xs text-base-content/65">${escapeHtml(formatDateTime(session.firstAt))}<br />→ ${escapeHtml(formatDateTime(session.lastAt))}</td>
+              ${cell(formatTokens(summary.totals.input))}
+              ${cell(formatTokens(summary.totals.output))}
+              ${cell(formatTokens(cache))}
+              ${cell(`<strong>${formatTokens(summary.totals.total)}</strong>`)}
+              ${cell(formatCost(summary.totals.cost))}
+              <td><button class="open-session btn btn-ghost btn-sm whitespace-nowrap" data-session-index="${index}">打开对话</button></td>
+            </tr>`;
+          })
+          .join("");
+      }
+
+      function renderIssues() {
+        if (!state.issues.length) {
+          elements.issuesPanel.classList.add("hidden");
+          return;
+        }
+        elements.issuesPanel.classList.remove("hidden");
+        elements.issuesList.innerHTML = state.issues.map((issue) => `<li>${escapeHtml(issue)}</li>`).join("");
+      }
+
+      function refreshDashboard() {
+        const allEvents = state.sessions.flatMap((session) => filteredEvents(session));
+        const summary = summarizeEvents(allEvents);
+        const dailyRows = bucketRows(allEvents, "day");
+        const monthlyRows = bucketRows(allEvents, "month");
+        const modelRows = groupModelRows(allEvents.filter((event) => event.kind === "assistant"));
+        const projectRows = groupRows(allEvents, (event) => event.project || "未知项目");
+
+        renderKpis(summary);
+        renderTrend(dailyRows);
+        renderBucketTables(dailyRows, monthlyRows);
+        renderModelTable(modelRows);
+        renderProjectTable(projectRows);
+        renderSessionTable();
+
+        const dateFilter = elements.fromDate.value || elements.toDate.value;
+        elements.filterSummary.textContent = dateFilter
+          ? `${elements.fromDate.value || "最早"} 至 ${elements.toDate.value || "最新"}`
+          : "当前显示全部记录";
+        elements.resultSummary.textContent = `${numberFormatter.format(state.sessions.length)} 个会话 · ${numberFormatter.format(new Set(state.sessions.map((session) => session.cwd)).size)} 个项目 · ${numberFormatter.format(allEvents.length)} 条用量记录`;
+        elements.lastUpdated.textContent = `计算完成于 ${formatDateTime(Date.now())}`;
+      }
+
+      function renderDetailUsage(usage) {
+        return `输入 ${formatTokens(usage.input)} · 输出 ${formatTokens(usage.output)} · Cache Read ${formatTokens(usage.cacheRead)} · Cache Write ${formatTokens(usage.cacheWrite)} · 总量 ${formatTokens(usage.total)} · ${formatCost(usage.cost)}`;
+      }
+
+      function renderTextBlock(text, className = "") {
+        if (!String(text || "").trim()) return "";
+        return `<div class="conversation-content ${className}">${escapeHtml(text)}</div>`;
+      }
+
+      function renderContent(content) {
+        if (typeof content === "string") return renderTextBlock(content);
+        if (!Array.isArray(content)) return "";
+        return content
+          .map((part) => {
+            if (!part || typeof part !== "object") return "";
+            if (part.type === "text") return renderTextBlock(part.text || "");
+            if (part.type === "thinking") {
+              return `<details class="rounded-box border border-secondary/25 bg-secondary/10 p-3 text-sm">
+                <summary class="cursor-pointer font-semibold text-secondary-content/75">思考过程</summary>
+                <div class="conversation-content mt-3 text-base-content/70">${escapeHtml(part.thinking || part.text || "")}</div>
+              </details>`;
+            }
+            if (part.type === "toolCall") {
+              const args = JSON.stringify(part.arguments ?? {}, null, 2);
+              return `<details class="rounded-box border border-base-300 bg-base-200 p-3 text-sm">
+                <summary class="cursor-pointer font-semibold">工具调用：${escapeHtml(part.name || "未知工具")}</summary>
+                <pre class="conversation-content mt-3 overflow-x-auto text-xs text-base-content/65">${escapeHtml(args)}</pre>
+              </details>`;
+            }
+            if (part.type === "image") {
+              return `<div class="rounded-field border border-base-300 bg-base-200 px-3 py-2 text-sm text-base-content/55">图片附件（${escapeHtml(part.mimeType || "未知类型")}）</div>`;
+            }
+            return "";
+          })
+          .filter(Boolean)
+          .join('<div class="h-2"></div>');
+      }
+
+      function renderMessageEntry(entry) {
+        const message = entry.message || {};
+        const timestamp = entryTimestamp(entry, null);
+        if (message.role === "user") {
+          return `<article class="ml-auto max-w-4xl">
+            <div class="mb-1 flex items-center justify-end gap-2 text-xs text-base-content/45"><span>你</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
+            <div class="rounded-box border border-info/25 bg-info/10 p-4 text-sm leading-6">${renderContent(message.content) || '<span class="text-base-content/45">空消息</span>'}</div>
+          </article>`;
+        }
+        if (message.role === "assistant") {
+          const usage = normalizeUsage(message.usage) || zeroTotals();
+          const model = `${message.provider || "unknown"}/${message.responseModel || message.model || "unknown"}`;
+          const error = message.errorMessage ? `<div class="mt-3 rounded-field bg-error/10 p-3 text-sm text-error-content">${escapeHtml(message.errorMessage)}</div>` : "";
+          return `<article class="mr-auto max-w-4xl">
+            <div class="mb-1 flex flex-wrap items-center gap-2 text-xs text-base-content/45"><span class="font-semibold text-info">Assistant</span><span>${escapeHtml(model)}</span><time>${escapeHtml(formatDateTime(timestamp))}</time></div>
+            <div class="rounded-box border border-base-300 bg-base-100 p-4 text-sm leading-6 shadow-sm">
+              ${renderContent(message.content) || '<span class="text-base-content/45">空回复</span>'}
+              ${error}
+              <div class="mt-4 border-t border-base-300 pt-3 text-xs text-base-content/45">${renderDetailUsage(usage)}</div>
+            </div>
+          </article>`;
+        }
+        if (message.role === "toolResult") {
+          return `<details class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200/70 p-3 text-sm">
+            <summary class="cursor-pointer font-semibold text-base-content/65">工具结果 · ${escapeHtml(message.toolName || message.toolCallId || "未命名工具")} · ${escapeHtml(formatDateTime(timestamp))}</summary>
+            <div class="mt-3 leading-6">${renderContent(message.content) || '<span class="text-base-content/45">空结果</span>'}</div>
+          </details>`;
+        }
+        return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/60">${escapeHtml(message.role || "未知消息")}：${escapeHtml(contentToText(message.content))}</div>`;
+      }
+
+      function renderEntry(entry) {
+        if (entry.type === "message") return renderMessageEntry(entry);
+        if (entry.type === "compaction") {
+          const usage = normalizeUsage(entry.usage);
+          return `<div class="mx-auto max-w-4xl rounded-box border border-warning/25 bg-warning/10 p-4 text-sm">
+            <div class="font-semibold text-warning-content">上下文压缩 · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
+            <div class="conversation-content mt-2 text-warning-content/75">${escapeHtml(entry.summary || "无摘要")}</div>
+            ${usage ? `<div class="mt-3 text-xs text-warning-content/60">${renderDetailUsage(usage)}</div>` : ""}
+          </div>`;
+        }
+        if (entry.type === "branch_summary") {
+          const usage = normalizeUsage(entry.usage);
+          return `<div class="mx-auto max-w-4xl rounded-box border border-secondary/25 bg-secondary/10 p-4 text-sm">
+            <div class="font-semibold text-secondary-content">分支摘要 · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>
+            <div class="conversation-content mt-2 text-secondary-content/75">${escapeHtml(entry.summary || "无摘要")}</div>
+            ${usage ? `<div class="mt-3 text-xs text-secondary-content/60">${renderDetailUsage(usage)}</div>` : ""}
+          </div>`;
+        }
+        if (entry.type === "model_change") {
+          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">切换模型：${escapeHtml(entry.provider)}/${escapeHtml(entry.modelId)} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+        }
+        if (entry.type === "thinking_level_change") {
+          return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/40">切换思考级别：${escapeHtml(entry.thinkingLevel)} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+        }
+        if (entry.type === "custom_message") {
+          return `<div class="mx-auto max-w-4xl rounded-box border border-base-300 bg-base-200 p-3 text-sm text-base-content/65"><strong>扩展消息</strong><div class="mt-2">${renderContent(entry.content) || "[无文本内容]"}</div></div>`;
+        }
+        return `<div class="mx-auto max-w-4xl text-center text-xs text-base-content/35">${escapeHtml(entry.type || "未知记录")} · ${escapeHtml(formatDateTime(entryTimestamp(entry, null)))}</div>`;
+      }
+
+      function activeBranchEntries(entries) {
+        if (!entries.length) return [];
+        const byId = new Map(entries.filter((entry) => entry.id).map((entry) => [entry.id, entry]));
+        const path = [];
+        let current = entries.at(-1);
+        const visited = new Set();
+        while (current && !visited.has(current.id)) {
+          path.push(current);
+          visited.add(current.id);
+          current = current.parentId ? byId.get(current.parentId) : null;
+        }
+        return path.reverse();
+      }
+
+      function renderDetailConversation() {
+        if (!state.detailData) return;
+        const entries = elements.detailMode.value === "active" ? activeBranchEntries(state.detailData.entries || []) : state.detailData.entries || [];
+        elements.conversationBody.innerHTML = entries.length
+          ? entries.map(renderEntry).join("")
+          : '<div class="py-16 text-center text-base-content/45">这个 session 没有可显示的消息。</div>';
+      }
+
+      async function openSession(index) {
+        const session = state.sessions[index];
+        if (!session) return;
+        const requestId = ++state.detailRequestId;
+        state.detailSession = session;
+        state.detailData = null;
+        elements.detailTitle.textContent = session.name;
+        elements.detailMeta.textContent = `${session.project} · ${session.cwd} · ${session.id}`;
+        elements.detailSummary.textContent = "正在读取会话内容…";
+        elements.conversationBody.innerHTML = '<div class="py-16 text-center text-base-content/45">正在读取 JSONL…</div>';
+        elements.detailModal.showModal();
+
+        try {
+          const parsed = await parseSessionFile(session.file, true);
+          if (requestId !== state.detailRequestId) return;
+          state.detailData = parsed;
+          elements.detailSummary.textContent = `${formatDateTime(session.firstAt)} → ${formatDateTime(session.lastAt)} · ${formatTokens(session.totals.total)} Token · ${formatCost(session.totals.cost)} · ${session.assistantMessages} 条 Assistant · ${session.userMessages} 条用户消息`;
+          renderDetailConversation();
+        } catch (error) {
+          if (requestId !== state.detailRequestId) return;
+          elements.detailSummary.textContent = `读取失败：${error.message}`;
+          elements.conversationBody.innerHTML = '<div class="py-16 text-center text-error">无法读取这个会话文件。</div>';
+        }
+      }
+
+      async function calculate() {
+        if (!state.files.length) return;
+        state.sessions = [];
+        state.issues = [];
+        const seenSessionIds = new Set();
+        elements.calculateButton.disabled = true;
+        elements.progressWrap.classList.remove("hidden");
+        elements.dashboard.classList.add("hidden");
+
+        for (let index = 0; index < state.files.length; index += 1) {
+          const file = state.files[index];
+          const percentage = Math.round(((index + 1) / state.files.length) * 100);
+          elements.progressLabel.textContent = `正在读取 ${index + 1}/${state.files.length}：${file.name}`;
+          elements.progressValue.textContent = `${percentage}%`;
+          elements.progressBar.style.width = `${percentage}%`;
+          try {
+            const session = await parseSessionFile(file);
+            if (seenSessionIds.has(session.id)) {
+              state.issues.push(`跳过重复 session：${session.id}（${file.name}）`);
+              continue;
+            }
+            seenSessionIds.add(session.id);
+            state.sessions.push(session);
+            if (session.malformedLines) {
+              state.issues.push(`${session.relativePath} 有 ${session.malformedLines} 行 JSON 无法解析。`);
+            }
+            if (session.missingUsage) {
+              state.issues.push(`${session.relativePath} 有 ${session.missingUsage} 条 Assistant 记录缺少 usage，相关调用会计入次数但不会产生 Token。`);
+            }
+          } catch (error) {
+            state.issues.push(`${file.webkitRelativePath || file.name}：${error.message}`);
+          }
+        }
+
+        state.sessions.sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0));
+        elements.progressWrap.classList.add("hidden");
+        elements.dashboard.classList.remove("hidden");
+        elements.calculateButton.disabled = state.files.length === 0;
+        setActiveRange("all");
+        setStatus(`完成：读取 ${numberFormatter.format(state.sessions.length)} 个有效 session。`, state.sessions.length ? "text-success" : "text-warning");
+        renderIssues();
+        refreshDashboard();
+      }
+
+      elements.chooseDirectoryButton.addEventListener("click", () => elements.directoryPicker.click());
+      elements.chooseFilesButton.addEventListener("click", () => elements.filePicker.click());
+      elements.directoryPicker.addEventListener("change", (event) => addFiles(event.target.files));
+      elements.filePicker.addEventListener("change", (event) => addFiles(event.target.files));
+      elements.calculateButton.addEventListener("click", calculate);
+      elements.timezoneSelect.addEventListener("change", refreshDashboard);
+      elements.applyFiltersButton.addEventListener("click", refreshDashboard);
+      elements.fromDate.addEventListener("change", () => {
+        setActiveRange(null);
+        refreshDashboard();
+      });
+      elements.toDate.addEventListener("change", () => {
+        setActiveRange(null);
+        refreshDashboard();
+      });
+      elements.rangeButtons.forEach((button) => {
+        button.addEventListener("click", () => applyQuickRange(button.dataset.range));
+      });
+      elements.resetFiltersButton.addEventListener("click", () => {
+        elements.timezoneSelect.value = "local";
+        elements.fromDate.value = "";
+        elements.toDate.value = "";
+        setActiveRange("all");
+        refreshDashboard();
+      });
+      elements.detailMode.addEventListener("change", renderDetailConversation);
+      elements.sessionTableBody.addEventListener("click", (event) => {
+        const button = event.target.closest(".open-session");
+        if (button) openSession(Number(button.dataset.sessionIndex));
+      });
+
+      updateSelectionSummary();
+    </script>
+  </body>
+</html>

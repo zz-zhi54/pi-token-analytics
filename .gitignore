@@ -1,0 +1,9 @@
+# IDE and local agent files
+.idea/
+.agents/
+
+# OS files
+.DS_Store
+
+# Local test artifacts
+*.log
