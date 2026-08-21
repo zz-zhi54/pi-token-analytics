@@ -40,6 +40,37 @@
         height: 11rem;
       }
 
+      .chart-bar {
+        position: relative;
+        outline: none;
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        bottom: calc(100% + 0.5rem);
+        left: 50%;
+        z-index: 20;
+        width: max-content;
+        max-width: 16rem;
+        transform: translateX(-50%);
+        border: 1px solid color-mix(in oklab, var(--color-info) 45%, var(--color-base-300));
+        border-radius: var(--radius-box);
+        background: var(--color-base-100);
+        padding: 0.65rem 0.75rem;
+        color: var(--color-base-content);
+        box-shadow: var(--shadow-xl);
+        font-size: 0.7rem;
+        line-height: 1.5;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 160ms ease;
+      }
+
+      .chart-bar:hover .chart-tooltip,
+      .chart-bar:focus-visible .chart-tooltip {
+        opacity: 1;
+      }
+
       .soft-grid {
         background-image: linear-gradient(color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px, transparent 1px),
           linear-gradient(90deg, color-mix(in oklab, var(--color-base-content) 5%, transparent) 1px, transparent 1px);
@@ -916,9 +947,18 @@
         elements.trendChart.innerHTML = chartRows
           .map((row) => {
             const height = row.totals.total ? Math.max((row.totals.total / max) * 100, 4) : 2;
-            return `<div class="flex min-w-12 flex-1 flex-col items-center gap-2" title="${escapeHtml(row.key)}：${formatTokens(row.totals.total)} Token">
+            const label = `${row.key}：${formatTokens(row.totals.total)} Token`;
+            return `<div class="flex min-w-12 flex-1 flex-col items-center gap-1">
+              <span class="min-h-5 whitespace-nowrap text-[0.65rem] font-semibold text-info">${formatTokens(row.totals.total)}</span>
               <div class="bar-track flex w-full items-end rounded-box bg-base-200 p-1">
-                <div class="w-full rounded-selector bg-info transition-all" style="height: ${height}%"></div>
+                <div class="chart-bar w-full rounded-selector bg-info transition-all" tabindex="0" aria-label="${escapeHtml(label)}" style="height: ${height}%">
+                  <div class="chart-tooltip">
+                    <div class="font-semibold text-info">${escapeHtml(row.key)}</div>
+                    <div>总量：${formatTokens(row.totals.total)} Token</div>
+                    <div class="text-base-content/65">输入：${formatTokens(row.totals.input)} · 输出：${formatTokens(row.totals.output)}</div>
+                    <div class="text-base-content/65">Cache Read：${formatTokens(row.totals.cacheRead)} · Cache Write：${formatTokens(row.totals.cacheWrite)}</div>
+                  </div>
+                </div>
               </div>
               <span class="text-[0.65rem] text-base-content/55">${escapeHtml(row.key.slice(5))}</span>
             </div>`;
