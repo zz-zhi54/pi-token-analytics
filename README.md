@@ -1,5 +1,7 @@
 # Pi Token Analytics
 
+[English](README.en.md)
+
 一个纯 HTML 的 Pi 会话 Token 使用情况分析页面。
 
 ## 功能
